@@ -31,9 +31,8 @@ Widget::Widget(QWidget *parent)
     ui->label_qr->setToolTip(id);
 
     static QString clipId = "mrbeanc"; //改为从文件读取
-    static QString ip = "124.220.81.213";
+    static QString ip = "124.220.81.213"; //https
     // static QString ip = "localhost";
-    static QString port = "8080";
     static QNetworkAccessManager manager;
     static bool isMeSetClipboard = false;
 
@@ -69,7 +68,7 @@ Widget::Widget(QWidget *parent)
             return;
         }
 
-        QNetworkRequest request(QUrl(QString("http://%1:%2/clipboard/%3/win").arg(ip, port, clipId)));
+        QNetworkRequest request(QUrl(QString("https://%1/clipboard/%2/win").arg(ip, clipId)));
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
         QJsonObject jsonData;
@@ -92,7 +91,7 @@ Widget::Widget(QWidget *parent)
     });
 
     static std::function<void(void)> pollCloudClip = [=](){
-        QNetworkRequest request(QUrl(QString("http://%1:%2/clipboard/long-polling/%3/win").arg(ip, port, clipId)));
+        QNetworkRequest request(QUrl(QString("https://%1/clipboard/long-polling/%2/win").arg(ip, clipId)));
         // 可以加入心跳机制确保更快重连（丢弃失败的连接），毕竟90s还是太长
         // 不过等我遇到问题再加吧hh 应该是小概率事件，相信HTTP！
         request.setTransferTimeout(90 * 1000); // 90s超时时间，避免服务端掉线 & 网络异常造成的无响应永久等待
