@@ -11,11 +11,13 @@ CONFIG += c++17
 SOURCES += \
     QRcode/qrcodegen.cpp \
     main.cpp \
+    util.cpp \
     widget.cpp
 
 HEADERS += \
     QRcode/QRUtil.h \
     QRcode/qrcodegen.hpp \
+    util.h \
     widget.h
 
 FORMS += \

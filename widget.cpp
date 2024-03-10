@@ -1,5 +1,6 @@
 #include "widget.h"
 #include "ui_widget.h"
+#include "util.h"
 #include <QClipboard>
 #include <QMimeData>
 #include <QNetworkAccessManager>
@@ -56,6 +57,16 @@ Widget::Widget(QWidget *parent)
             }
         } else if (clipData->hasText()) { // TODO
             data = clipData->text().toUtf8();
+        } else {
+            qDebug() << "WARN: This Type is not supported NOW.";
+            sysTray->showMessage("WARN", "This Type is not supported NOW.");
+            return;
+        }
+
+        if (data.size() > 1024 * 1024 * 2) { // 2MB
+            qDebug() << "WARN: Data too large, ignore.";
+            sysTray->showMessage("WARN", "Data too large, ignore.");
+            return;
         }
 
         QNetworkRequest request(QUrl(QString("http://%1:%2/clipboard/%3/win").arg(ip, port, clipId)));
@@ -72,7 +83,7 @@ Widget::Widget(QWidget *parent)
 
         QObject::connect(reply, &QNetworkReply::finished, [=]() {
             if (reply->error() == QNetworkReply::NoError) {
-                qDebug() << "Copied to Cloud. OK.";
+                qDebug() << "Copied to Cloud. OK." << Util::printDataSize(data.size());
             } else {
                 qDebug() << "Post Error:" << reply->errorString();
             }
@@ -108,7 +119,7 @@ Widget::Widget(QWidget *parent)
                         qApp->clipboard()->setImage(QImage::fromData(QByteArray::fromBase64(data.toUtf8())));
                     }
                     sysTray->showMessage("Pasted from IOS", isText ? data : "[Image]"); //可以在 系统-通知 中关闭声音
-                    qDebug() << "Pasted from IOS";
+                    qDebug() << "Pasted from IOS;" << Util::printDataSize(data.toUtf8().size());
                 }
 
                 if (statusCode == 200 && data.isEmpty()) { //有时出现 200、NoError，但是无数据的情况 Why！！
