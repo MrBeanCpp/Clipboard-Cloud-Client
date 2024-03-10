@@ -30,7 +30,8 @@ Widget::Widget(QWidget *parent)
     ui->label_qr->setToolTip(id);
 
     static QString clipId = "mrbeanc";
-    static QString ip = "localhost";
+    static QString ip = "124.220.81.213";
+    // static QString ip = "localhost";
     static QString port = "8080";
     static QNetworkAccessManager manager;
     static bool isMeSetClipboard = false;
@@ -51,7 +52,7 @@ Widget::Widget(QWidget *parent)
                 buffer.open(QIODevice::WriteOnly);
                 image.save(&buffer, "jpg"); // 将 QImage 保存为 jpg 格式
                 buffer.close();
-                data = data.toBase64(); // 转换为 Base64 编码
+                data = data.toBase64(); // 转换为 Base64 编码，防止老式设备进行隐式编解码导致信息丢失
             }
         } else if (clipData->hasText()) { // TODO
             data = clipData->text().toUtf8();
@@ -71,7 +72,7 @@ Widget::Widget(QWidget *parent)
 
         QObject::connect(reply, &QNetworkReply::finished, [=]() {
             if (reply->error() == QNetworkReply::NoError) {
-                qDebug() << "Copy to Cloud";
+                qDebug() << "Copied to Cloud. OK.";
             } else {
                 qDebug() << "Post Error:" << reply->errorString();
             }
@@ -81,11 +82,15 @@ Widget::Widget(QWidget *parent)
 
     static std::function<void(void)> pollCloudClip = [=](){
         QNetworkRequest request(QUrl(QString("http://%1:%2/clipboard/long-polling/%3/win").arg(ip, port, clipId)));
+        // 可以加入心跳机制确保更快重连（丢弃失败的连接），毕竟90s还是太长
+        // 不过等我遇到问题再加吧hh 应该是小概率事件，相信HTTP！
+        request.setTransferTimeout(90 * 1000); // 90s超时时间，避免服务端掉线 & 网络异常造成的无响应永久等待
         QNetworkReply *reply = manager.get(request);
         qDebug() << "Start long polling...";
 
         connect(reply, &QNetworkReply::finished, this, [=]() {
-            qDebug() << "Long polling done.";
+            int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            qDebug() << "Long polling done." << statusCode;
             if (reply->error() == QNetworkReply::NoError) {
                 QByteArray replyData = reply->readAll();
                 QJsonDocument doc = QJsonDocument::fromJson(replyData);
@@ -96,20 +101,28 @@ Widget::Widget(QWidget *parent)
                 const bool isText = jsonData.value("isText").toBool();
 
                 if (os == "ios" && !data.isEmpty()) {
+                    isMeSetClipboard = true;
                     if (isText) {
                         qApp->clipboard()->setText(data);
-                    } else { // Not support now
-                        // qApp->clipboard()->setImage(QImage::fromData(QByteArray::fromBase64(data.toUtf8())));
+                    } else {
+                        qApp->clipboard()->setImage(QImage::fromData(QByteArray::fromBase64(data.toUtf8())));
                     }
-                    isMeSetClipboard = true;
-                    qDebug() << "Paste from IOS";
+                    sysTray->showMessage("Pasted from IOS", isText ? data : "[Image]"); //可以在 系统-通知 中关闭声音
+                    qDebug() << "Pasted from IOS";
+                }
+
+                if (statusCode == 200) { //有时出现 200、NoError，但是无数据的情况 Why！！
+                    qDebug() << "WTF! 200 but no data";
+                    qDebug() << jsonData;
+                    qDebug() << replyData;
+                    qDebug() << reply->errorString();
                 }
             } else {
                 qDebug() << "Get Error:" << reply->errorString();
             }
             reply->deleteLater();
 
-            QTimer::singleShot(2000, this, pollCloudClip);
+            QTimer::singleShot(1000, this, pollCloudClip);
         });
     };
 
