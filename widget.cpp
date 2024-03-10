@@ -29,7 +29,7 @@ Widget::Widget(QWidget *parent)
     ui->label_qr->adjustSize();
     ui->label_qr->setToolTip(id);
 
-    static QString clipId = "mrbeanc";
+    static QString clipId = "mrbeanc"; //改为从文件读取
     static QString ip = "124.220.81.213";
     // static QString ip = "localhost";
     static QString port = "8080";
@@ -111,7 +111,7 @@ Widget::Widget(QWidget *parent)
                     qDebug() << "Pasted from IOS";
                 }
 
-                if (statusCode == 200) { //有时出现 200、NoError，但是无数据的情况 Why！！
+                if (statusCode == 200 && data.isEmpty()) { //有时出现 200、NoError，但是无数据的情况 Why！！
                     qDebug() << "WTF! 200 but no data";
                     qDebug() << jsonData;
                     qDebug() << replyData;
