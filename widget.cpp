@@ -10,12 +10,18 @@
 #include <QRcode/QRUtil.h>
 #include <QUuid>
 #include <QTimer>
+#include <QSystemTrayIcon>
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Widget)
 {
     ui->setupUi(this);
+
+    QSystemTrayIcon *sysTray = new QSystemTrayIcon(QIcon(":/img/clipboard.ico"));
+    sysTray->setToolTip("Clipboard-Cloud");
+    sysTray->show();
+
 
     QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     QImage qrImage = QRUtil::encodeText(id);
