@@ -3,7 +3,6 @@
 #include "util.h"
 #include <QClipboard>
 #include <QMimeData>
-#include <QNetworkAccessManager>
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QNetworkReply>
@@ -11,7 +10,6 @@
 #include <QRcode/QRUtil.h>
 #include <QUuid>
 #include <QTimer>
-#include <QSystemTrayIcon>
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
@@ -19,10 +17,9 @@ Widget::Widget(QWidget *parent)
 {
     ui->setupUi(this);
 
-    QSystemTrayIcon *sysTray = new QSystemTrayIcon(QIcon(":/img/clipboard.ico"));
-    sysTray->setToolTip("Clipboard-Cloud");
+    this->sysTray = new QSystemTrayIcon(QIcon(":/img/clipboard.ico"), this);
+    sysTray->setToolTip(APP_NAME);
     sysTray->show();
-
 
     QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
     QImage qrImage = QRUtil::encodeText(id);
@@ -30,13 +27,20 @@ Widget::Widget(QWidget *parent)
     ui->label_qr->adjustSize();
     ui->label_qr->setToolTip(id);
 
-    static QString clipId = "mrbeanc"; //改为从文件读取 //TODO 改为 (uuid + passwd + day)的hash值，每日动态变化，保证安全性
-    static QString hashId = Util::genSHA256(clipId);
+    static QString userId = "mrbeanc"; //改为从文件读取 //TODO 改为 (uuid + userId + day)的hash值，每日动态变化，保证安全性
+    static QString hashId = Util::genSHA256(userId);
     static QString baseUrl = "https://124.220.81.213"; //https
     // static QString baseUrl = "http://localhost";
-    static QNetworkAccessManager manager;
-    static bool isMeSetClipboard = false;
+    this->manager = new QNetworkAccessManager(this);
 
+    //更新连接状态（UI显示）
+    //每个请求结束都会触发
+    connect(manager, &QNetworkAccessManager::finished, this, [=](QNetworkReply* reply){
+        updateConnectionStatus(reply->error() == QNetworkReply::NoError);
+        reply->deleteLater();
+    });
+
+    //监听剪贴板变化
     connect(qApp->clipboard(), &QClipboard::dataChanged, this, [=](){
         if (isMeSetClipboard) { // 避免检测到自身对剪切板的修改
             isMeSetClipboard = false;
@@ -45,8 +49,8 @@ Widget::Widget(QWidget *parent)
 
         const QMimeData* clipData = qApp->clipboard()->mimeData();
         QByteArray data;
-        if (clipData->hasImage()) { // to base64
-            // qDebug() << clipData->formats(); // application/x-qt-image
+        if (clipData->hasImage()) {
+            //format: application/x-qt-image
             QImage image = qvariant_cast<QImage>(clipData->imageData()); //不能直接toByteArray，需要先转换为QImage，否则为空
             if (!image.isNull()) {
                 QBuffer buffer(&data);
@@ -81,14 +85,13 @@ Widget::Widget(QWidget *parent)
         QJsonDocument doc(jsonData);
         QByteArray postData = doc.toJson();
 
-        QNetworkReply *reply = manager.post(request, postData);
+        QNetworkReply *reply = manager->post(request, postData);
 
-        QObject::connect(reply, &QNetworkReply::finished, [=]() {
+        QObject::connect(reply, &QNetworkReply::finished, this, [=]() {
             int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             if (reply->error() == QNetworkReply::NoError) {
                 qDebug() << "Copied to Cloud. OK." << statusCode << Util::printDataSize(data.size());
             } else {
-                //TODO 展示服务器状态
                 qDebug() << "Post Error:" << statusCode << reply->errorString();
             }
             reply->deleteLater(); //比delete更安全，因为不确定是否有其他slot未执行
@@ -100,8 +103,8 @@ Widget::Widget(QWidget *parent)
         // 可以加入心跳机制确保更快重连（丢弃失败的连接），毕竟90s还是太长
         // 不过等我遇到问题再加吧hh 应该是小概率事件，相信HTTP！
         request.setTransferTimeout(90 * 1000); // 90s超时时间，避免服务端掉线 & 网络异常造成的无响应永久等待
-        QNetworkReply *reply = manager.get(request);
-        qDebug() << "Start long polling...";
+        QNetworkReply *reply = manager->get(request);
+        qDebug() << "Start long-polling...";
 
         connect(reply, &QNetworkReply::finished, this, [=]() {
             int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
@@ -147,4 +150,16 @@ Widget::Widget(QWidget *parent)
 Widget::~Widget()
 {
     delete ui;
+}
+
+void Widget::updateConnectionStatus(bool isConnected)
+{
+    if (this->isConnected == isConnected) return;
+    this->isConnected = isConnected;
+
+    if (isConnected) {
+        sysTray->setToolTip(APP_NAME);
+    } else {
+        sysTray->setToolTip(APP_NAME + " - [Disconnected]");
+    }
 }

@@ -1,6 +1,8 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 
+#include <QNetworkAccessManager>
+#include <QSystemTrayIcon>
 #include <QWidget>
 
 QT_BEGIN_NAMESPACE
@@ -16,8 +18,16 @@ class Widget : public QWidget
 public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
+private:
+    void updateConnectionStatus(bool isConnected);
 
 private:
     Ui::Widget *ui;
+
+    const QString APP_NAME = "Clipboard-Cloud";
+    QNetworkAccessManager* manager = nullptr;
+    QSystemTrayIcon *sysTray = nullptr;
+    bool isConnected = true; //与服务器的连接状态
+    bool isMeSetClipboard = false; //是否是本程序设置了剪贴板
 };
 #endif // WIDGET_H
