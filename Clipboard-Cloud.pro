@@ -11,16 +11,19 @@ CONFIG += c++17
 SOURCES += \
     QRcode/qrcodegen.cpp \
     main.cpp \
+    tipwidget.cpp \
     util.cpp \
     widget.cpp
 
 HEADERS += \
     QRcode/QRUtil.h \
     QRcode/qrcodegen.hpp \
+    tipwidget.h \
     util.h \
     widget.h
 
 FORMS += \
+    tipwidget.ui \
     widget.ui
 
 # Default rules for deployment.

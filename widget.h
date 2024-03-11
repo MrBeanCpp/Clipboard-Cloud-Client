@@ -4,6 +4,7 @@
 #include <QNetworkAccessManager>
 #include <QSystemTrayIcon>
 #include <QWidget>
+#include "TipWidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -29,5 +30,6 @@ private:
     QSystemTrayIcon *sysTray = nullptr;
     bool isConnected = true; //与服务器的连接状态
     bool isMeSetClipboard = false; //是否是本程序设置了剪贴板
+    TipWidget *tipWidget = nullptr;
 };
 #endif // WIDGET_H

@@ -17,6 +17,8 @@ Widget::Widget(QWidget *parent)
 {
     ui->setupUi(this);
 
+    this->tipWidget = new TipWidget(this);
+
     this->sysTray = new QSystemTrayIcon(QIcon(":/img/clipboard.ico"), this);
     sysTray->setToolTip(APP_NAME);
     sysTray->show();
@@ -86,13 +88,17 @@ Widget::Widget(QWidget *parent)
         QByteArray postData = doc.toJson();
 
         QNetworkReply *reply = manager->post(request, postData);
+        tipWidget->showNormalStyle();
 
         QObject::connect(reply, &QNetworkReply::finished, this, [=]() {
             int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             if (reply->error() == QNetworkReply::NoError) {
                 qDebug() << "Copied to Cloud. OK." << statusCode << Util::printDataSize(data.size());
+                tipWidget->hide();
             } else {
                 qDebug() << "Post Error:" << statusCode << reply->errorString();
+                tipWidget->showFailedStyle();
+                QTimer::singleShot(2000, tipWidget, &TipWidget::hide);
             }
             reply->deleteLater(); //比delete更安全，因为不确定是否有其他slot未执行
         });
