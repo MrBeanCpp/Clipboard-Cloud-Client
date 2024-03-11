@@ -31,6 +31,7 @@ Widget::Widget(QWidget *parent)
     ui->label_qr->setToolTip(id);
 
     static QString clipId = "mrbeanc"; //改为从文件读取 //TODO 改为 (uuid + passwd + day)的hash值，每日动态变化，保证安全性
+    static QString hashId = Util::genSHA256(clipId);
     static QString baseUrl = "https://124.220.81.213"; //https
     // static QString baseUrl = "http://localhost";
     static QNetworkAccessManager manager;
@@ -68,7 +69,7 @@ Widget::Widget(QWidget *parent)
             return;
         }
 
-        QNetworkRequest request(QUrl(QString("%1/clipboard/%2/win").arg(baseUrl, clipId)));
+        QNetworkRequest request(QUrl(QString("%1/clipboard/%2/win").arg(baseUrl, hashId)));
         // 超时会abort()，同时触发finished信号，并产生QNetworkReply::OperationCanceledError 状态码为0
         request.setTransferTimeout(8 * 1000); // 8s超时时间
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -95,7 +96,7 @@ Widget::Widget(QWidget *parent)
     });
 
     static std::function<void(void)> pollCloudClip = [=](){
-        QNetworkRequest request(QUrl(QString("%1/clipboard/long-polling/%2/win").arg(baseUrl, clipId)));
+        QNetworkRequest request(QUrl(QString("%1/clipboard/long-polling/%2/win").arg(baseUrl, hashId)));
         // 可以加入心跳机制确保更快重连（丢弃失败的连接），毕竟90s还是太长
         // 不过等我遇到问题再加吧hh 应该是小概率事件，相信HTTP！
         request.setTransferTimeout(90 * 1000); // 90s超时时间，避免服务端掉线 & 网络异常造成的无响应永久等待
