@@ -67,7 +67,7 @@ void TipWidget::moveCenter(const QPoint& pos)
 
 void TipWidget::traceCursor()
 {
-    this->moveCenter(QCursor::pos() + QPoint(12, -5)); //TODO High DPI support
+    this->moveCenter(QCursor::pos() + QPoint(14, -5)); //TODO High DPI support
 }
 
 void TipWidget::paintEvent(QPaintEvent*)

@@ -50,6 +50,11 @@ Widget::Widget(QWidget *parent)
         }
 
         const QMimeData* clipData = qApp->clipboard()->mimeData();
+        if (clipData->formats().isEmpty()) { //复制 then [粘贴文件]的时候，剪贴板会变化，并且formats为空，WTF？
+            qDebug() << "WARN: No formats";
+            return;
+        }
+
         QByteArray data;
         if (clipData->hasImage()) {
             //format: application/x-qt-image
@@ -64,8 +69,7 @@ Widget::Widget(QWidget *parent)
         } else if (clipData->hasText()) { // TODO
             data = clipData->text().toUtf8();
         } else {
-            qDebug() << "WARN: This Type is not supported NOW.";
-            sysTray->showMessage("WARN", "This Type is not supported NOW.");
+            qDebug() << "WARN: This Type is not supported NOW." << clipData->formats();
             return;
         }
 
