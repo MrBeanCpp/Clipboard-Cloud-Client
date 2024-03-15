@@ -28,7 +28,7 @@ private:
     const QString APP_NAME = "Clipboard-Cloud";
     QNetworkAccessManager* manager = nullptr;
     QSystemTrayIcon *sysTray = nullptr;
-    bool isConnected = true; //与服务器的连接状态
+    bool isConnected = false; //与服务器的连接状态
     bool isMeSetClipboard = false; //是否是本程序设置了剪贴板
     TipWidget *tipWidget = nullptr;
 };

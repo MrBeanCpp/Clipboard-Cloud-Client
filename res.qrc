@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>img/clipboard.ico</file>
+        <file>img/clipboard-fail.ico</file>
     </qresource>
 </RCC>

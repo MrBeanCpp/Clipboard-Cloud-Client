@@ -19,8 +19,8 @@ Widget::Widget(QWidget *parent)
 
     this->tipWidget = new TipWidget(this);
 
-    this->sysTray = new QSystemTrayIcon(QIcon(":/img/clipboard.ico"), this);
-    sysTray->setToolTip(APP_NAME);
+    this->sysTray = new QSystemTrayIcon(this);
+    updateConnectionStatus(true);
     sysTray->show();
 
     QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -32,7 +32,7 @@ Widget::Widget(QWidget *parent)
     static QString userId = "mrbeanc"; //改为从文件读取 //TODO 改为 (uuid + userId + day)的hash值，每日动态变化，保证安全性
     static QString hashId = Util::genSHA256(userId);
     static QString baseUrl = "https://124.220.81.213"; //https
-    // static QString baseUrl = "http://localhost";
+    // static QString baseUrl = "http://localhost:8080";
     this->manager = new QNetworkAccessManager(this);
 
     //更新连接状态（UI显示）
@@ -66,7 +66,7 @@ Widget::Widget(QWidget *parent)
                 buffer.close();
                 data = data.toBase64(); // 转换为 Base64 编码，防止老式设备进行隐式编解码导致信息丢失
             }
-        } else if (clipData->hasText()) { // TODO
+        } else if (clipData->hasText()) {
             data = clipData->text().toUtf8();
         } else {
             qDebug() << "WARN: This Type is not supported NOW." << clipData->formats();
@@ -167,9 +167,13 @@ void Widget::updateConnectionStatus(bool isConnected)
     if (this->isConnected == isConnected) return;
     this->isConnected = isConnected;
 
+    Q_ASSERT(this->sysTray);
+
     if (isConnected) {
         sysTray->setToolTip(APP_NAME);
+        sysTray->setIcon(QIcon(":/img/clipboard.ico"));
     } else {
         sysTray->setToolTip(APP_NAME + " - [Disconnected]");
+        sysTray->setIcon(QIcon(":/img/clipboard-fail.ico"));
     }
 }
