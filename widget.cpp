@@ -51,7 +51,7 @@ Widget::Widget(QWidget *parent)
 
         const QMimeData* clipData = qApp->clipboard()->mimeData();
         if (clipData->formats().isEmpty()) { //复制 then [粘贴文件]的时候，剪贴板会变化，并且formats为空，WTF？
-            qDebug() << "WARN: No formats";
+            qWarning() << "WARN: No formats";
             return;
         }
 
@@ -69,12 +69,12 @@ Widget::Widget(QWidget *parent)
         } else if (clipData->hasText()) {
             data = clipData->text().toUtf8();
         } else {
-            qDebug() << "WARN: This Type is not supported NOW." << clipData->formats();
+            qWarning() << "WARN: This Type is not supported NOW." << clipData->formats();
             return;
         }
 
         if (data.size() > 1024 * 1024 * 2) { // 2MB
-            qDebug() << "WARN: Data too large, ignore.";
+            qWarning() << "WARN: Data too large, ignore.";
             sysTray->showMessage("WARN", "Data too large, ignore.");
             return;
         }
@@ -93,14 +93,15 @@ Widget::Widget(QWidget *parent)
 
         QNetworkReply *reply = manager->post(request, postData);
         tipWidget->showNormalStyle();
+        QTime start = QTime::currentTime();
 
         QObject::connect(reply, &QNetworkReply::finished, this, [=]() {
             int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
             if (reply->error() == QNetworkReply::NoError) {
-                qDebug() << "Copied to Cloud. OK." << statusCode << Util::printDataSize(data.size());
+                qDebug() << "↑Copied to Cloud √." << statusCode << Util::printDataSize(data.size()) << start.msecsTo(QTime::currentTime()) << "ms";
                 tipWidget->hide();
             } else {
-                qDebug() << "Post Error:" << statusCode << reply->errorString();
+                qCritical() << "× !!Post Error:" << statusCode << reply->errorString();
                 tipWidget->showFailedStyle();
                 QTimer::singleShot(2000, tipWidget, &TipWidget::hide);
             }
@@ -114,11 +115,11 @@ Widget::Widget(QWidget *parent)
         // 不过等我遇到问题再加吧hh 应该是小概率事件，相信HTTP！
         request.setTransferTimeout(90 * 1000); // 90s超时时间，避免服务端掉线 & 网络异常造成的无响应永久等待
         QNetworkReply *reply = manager->get(request);
-        qDebug() << "Start long-polling...";
+        qDebug() << "+Start long-polling...";
 
         connect(reply, &QNetworkReply::finished, this, [=]() {
             int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            qDebug() << "Long polling done." << statusCode;
+            qDebug() << "-Long polling done." << statusCode;
             if (reply->error() == QNetworkReply::NoError) {
                 QByteArray replyData = reply->readAll();
                 QJsonDocument doc = QJsonDocument::fromJson(replyData);
@@ -135,18 +136,18 @@ Widget::Widget(QWidget *parent)
                     } else {
                         qApp->clipboard()->setImage(QImage::fromData(QByteArray::fromBase64(data.toUtf8())));
                     }
-                    sysTray->showMessage("Pasted from IOS", isText ? data : "[Image]"); //可以在 系统-通知 中关闭声音
-                    qDebug() << "Pasted from IOS;" << Util::printDataSize(data.toUtf8().size());
+                    sysTray->showMessage("↓Pasted from IOS", isText ? data : "[Image]"); //可以在 系统-通知 中关闭声音
+                    qDebug() << "↓Pasted from IOS;" << Util::printDataSize(data.toUtf8().size());
                 }
 
                 if (statusCode == 200 && data.isEmpty()) { //有时出现 200、NoError，但是无数据的情况 Why！！
-                    qDebug() << "WTF! 200 but no data";
+                    qCritical() << "WTF! 200 but no data";
                     qDebug() << jsonData;
                     qDebug() << replyData;
                     qDebug() << reply->errorString();
                 }
             } else {
-                qDebug() << "Get Error:" << reply->errorString();
+                qCritical() << "× !!Get Error:" << reply->errorString();
             }
             reply->deleteLater();
 
