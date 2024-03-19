@@ -3,6 +3,8 @@
   <h1 style="display: inline-block; vertical-align: middle;">Clipboard-Cloud</h1>
 </div>
 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/MrBeanCpp/clipboard-cloud-client)
+
 Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴板
 
 ### 目前支持的数据格式：
@@ -66,12 +68,14 @@ Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴�
 
    1. **Copy from Cloud**:(download)
       - iCloud: [https://www.icloud.com/shortcuts/68c21836850d48719a5eb3beb803704a](https://www.icloud.com/shortcuts/68c21836850d48719a5eb3beb803704a)
-      - ![从云上下载](img/copy-qr.png)
+      - <img src="img/copy-qr.png" alt="从云上下载" style="zoom:50%;" />
    2. **Post to Cloud**:(upload)
       - iCloud: [https://www.icloud.com/shortcuts/3a811beeaee14dc39b543966e556d9cd](https://www.icloud.com/shortcuts/3a811beeaee14dc39b543966e556d9cd)
-      - ![上传到云](img/post-qr.png)
+      - <img src="img/post-qr.png" alt="上传到云" style="zoom:50%;" />
 
    可以将`Copy from Cloud`设置为**轻点背面两下**，`Post to Cloud`设置为**轻点背面三下**
+
+   <img src="img/click-back.png" style="zoom: 40%;" />
 
 ## 已知问题
 
