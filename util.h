@@ -19,6 +19,8 @@ public:
     static void setAutoRun(const QString& appName, bool autoRun);
     static bool isAutoRun(const QString& appName);
 
+    static QByteArray clipboardData(bool* isText = nullptr);
+
 };
 
 #endif // UTIL_H

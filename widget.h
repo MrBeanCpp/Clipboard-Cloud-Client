@@ -30,6 +30,9 @@ private:
     void showSettingData();
     void showQrCode(const QString& text);
 
+signals:
+    void appReady();
+
 private:
     Ui::Widget *ui;
 
@@ -46,9 +49,13 @@ private:
     QString baseUrl;
     QString userId;
     QString uuid;
+    QString hashId;
+
+    bool isAppReady = false; //是否已经初始化完成
 
     // QWidget interface
 protected:
     virtual void showEvent(QShowEvent* event) override;
+    virtual void closeEvent(QCloseEvent* event) override;
 };
 #endif // WIDGET_H

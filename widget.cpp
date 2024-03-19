@@ -14,6 +14,7 @@
 #include <QFile>
 #include <QMessageBox>
 #include <QMenu>
+#include <QCloseEvent>
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
@@ -33,6 +34,7 @@ Widget::Widget(QWidget *parent)
 
     if (QFile::exists(SETTINGS_FILE)) {
         readSettings();
+        QTimer::singleShot(0, this, [=](){emit appReady();}); // 延迟emit，防止构造函数中信号未连接
     } else {
         initSettings();
     }
@@ -49,13 +51,14 @@ Widget::Widget(QWidget *parent)
     });
     connect(ui->btn_uuid_reset, &QPushButton::clicked, this, &Widget::initUUID);
     connect(ui->btn_save, &QPushButton::clicked, this, &Widget::writeSettings);
+    connect(ui->btn_save, &QPushButton::clicked, this, &Widget::appReady); // save to ready while initSettings()
 
 
     // userId = "mrbeanc"; //改为从文件读取 //TODO 改为 (uuid + userId + day)的hash值，每日动态变化，保证安全性
-    static QString hashId = Util::genSHA256(uuid + userId);
+    // hashId = Util::genSHA256(uuid + userId);
     // static QString baseUrl = "https://124.220.81.213"; //https
     // baseUrl = "http://localhost:8080";
-    qDebug() << hashId;
+    // qDebug() << hashId;
 
     //更新连接状态（UI显示）
     //每个请求结束都会触发
@@ -66,34 +69,18 @@ Widget::Widget(QWidget *parent)
 
     //监听剪贴板变化
     connect(qApp->clipboard(), &QClipboard::dataChanged, this, [=](){
+        if (!isAppReady) return;
+
         if (isMeSetClipboard) { // 避免检测到自身对剪切板的修改
             isMeSetClipboard = false;
             return;
         }
 
-        const QMimeData* clipData = qApp->clipboard()->mimeData();
-        if (clipData->formats().isEmpty()) { //复制 then [粘贴文件]的时候，剪贴板会变化，并且formats为空，WTF？
-            qWarning() << "WARN: No formats";
-            return;
-        }
-
-        QByteArray data;
-        if (clipData->hasImage()) {
-            //format: application/x-qt-image
-            QImage image = qvariant_cast<QImage>(clipData->imageData()); //不能直接toByteArray，需要先转换为QImage，否则为空
-            if (!image.isNull()) {
-                QBuffer buffer(&data);
-                buffer.open(QIODevice::WriteOnly);
-                image.save(&buffer, "jpg"); // 将 QImage 保存为 jpg 格式
-                buffer.close();
-                data = data.toBase64(); // 转换为 Base64 编码，防止老式设备进行隐式编解码导致信息丢失
-            }
-        } else if (clipData->hasText()) {
-            data = clipData->text().toUtf8();
-        } else {
-            qWarning() << "WARN: This Type is not supported NOW." << clipData->formats();
-            return;
-        }
+        bool isText;
+        // 1.图像进行 Base64 编码，防止老式设备进行隐式编解码导致信息丢失
+        // 2.文本也进行 BASE64 编码，防止外链明文泄露，造成言论安全问题
+        QByteArray data = Util::clipboardData(&isText).toBase64();
+        if (data.isEmpty()) return;
 
         if (data.size() > 1024 * 1024 * 2) { // 2MB
             qWarning() << "WARN: Data too large, ignore.";
@@ -108,7 +95,7 @@ Widget::Widget(QWidget *parent)
 
         QJsonObject jsonData;
         jsonData.insert("data", QString::fromUtf8(data));
-        jsonData.insert("isText", !clipData->hasImage()); //有可能同时hasText，所以以image为准
+        jsonData.insert("isText", isText);
 
         QJsonDocument doc(jsonData);
         QByteArray postData = doc.toJson();
@@ -148,7 +135,8 @@ Widget::Widget(QWidget *parent)
                 QJsonObject jsonData = doc.object();
 
                 const QString os = jsonData.value("os").toString();
-                const QString data = jsonData.value("data").toString();
+                const QString base64Data = jsonData.value("data").toString();
+                const QByteArray data = QByteArray::fromBase64(base64Data.toUtf8()); //base64解码
                 const bool isText = jsonData.value("isText").toBool();
 
                 if (os == "ios" && !data.isEmpty()) {
@@ -156,17 +144,10 @@ Widget::Widget(QWidget *parent)
                     if (isText) {
                         qApp->clipboard()->setText(data);
                     } else {
-                        qApp->clipboard()->setImage(QImage::fromData(QByteArray::fromBase64(data.toUtf8())));
+                        qApp->clipboard()->setImage(QImage::fromData(data));
                     }
                     sysTray->showMessage("↓Pasted from IOS", isText ? data : "[Image]"); //可以在 系统-通知 中关闭声音
-                    qDebug() << "↓Pasted from IOS;" << Util::printDataSize(data.toUtf8().size());
-                }
-
-                if (statusCode == 200 && data.isEmpty()) { //有时出现 200、NoError，但是无数据的情况 Why！！
-                    qCritical() << "WTF! 200 but no data";
-                    qDebug() << jsonData;
-                    qDebug() << replyData;
-                    qDebug() << reply->errorString();
+                    qDebug() << "↓Pasted from IOS;" << Util::printDataSize(base64Data.toUtf8().size());
                 }
             } else {
                 qCritical() << "× !!Get Error:" << reply->errorString();
@@ -177,7 +158,16 @@ Widget::Widget(QWidget *parent)
         });
     };
 
-    pollCloudClip(); //发起长轮询，以获取实时推送
+    connect(this, &Widget::appReady, this, [=](){
+        if (isAppReady) return; //防止重复初始化
+
+        this->isAppReady = true;
+        this->hashId = Util::genSHA256(uuid + userId);
+        qDebug() << "id:" << hashId;
+
+        pollCloudClip(); //发起长轮询，以获取实时推送
+    });
+
 }
 
 Widget::~Widget()
@@ -318,4 +308,16 @@ void Widget::showEvent(QShowEvent* event)
 {
     showSettingData();
     QWidget::showEvent(event);
+}
+
+void Widget::closeEvent(QCloseEvent* event)
+{
+    if (!isAppReady) {
+        auto btn = QMessageBox::question(this, "WARN", "Save or Not?");
+        if (btn == QMessageBox::No)
+            event->accept();
+        else
+            emit ui->btn_save->clicked();
+    } else
+        event->accept();
 }
