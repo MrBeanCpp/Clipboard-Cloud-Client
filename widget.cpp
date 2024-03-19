@@ -10,30 +10,52 @@
 #include <QRcode/QRUtil.h>
 #include <QUuid>
 #include <QTimer>
+#include <QSettings>
+#include <QFile>
+#include <QMessageBox>
+#include <QMenu>
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Widget)
 {
     ui->setupUi(this);
+    setWindowTitle("Clipboard-Cloud by [MrBeanCpp]"); // https://github.com/MrBeanCpp
 
+    this->manager = new QNetworkAccessManager(this);
     this->tipWidget = new TipWidget(this);
 
-    this->sysTray = new QSystemTrayIcon(this);
-    updateConnectionStatus(true);
-    sysTray->show();
+    initSystemTray();
 
-    QString id = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    QImage qrImage = QRUtil::encodeText(id);
-    ui->label_qr->setPixmap(QPixmap::fromImage(qrImage));
-    ui->label_qr->adjustSize();
-    ui->label_qr->setToolTip(id);
+    ui->edit_server->setPlaceholderText("Server Url");
+    ui->edit_userid->setPlaceholderText("User Id: Unique Identifier.");
+    ui->edit_uuid->setPlaceholderText("uuid");
 
-    static QString userId = "mrbeanc"; //改为从文件读取 //TODO 改为 (uuid + userId + day)的hash值，每日动态变化，保证安全性
-    static QString hashId = Util::genSHA256(userId);
-    static QString baseUrl = "https://124.220.81.213"; //https
-    // static QString baseUrl = "http://localhost:8080";
-    this->manager = new QNetworkAccessManager(this);
+    if (QFile::exists(SETTINGS_FILE)) {
+        readSettings();
+    } else {
+        initSettings();
+    }
+
+    // test server-url available
+    connect(ui->btn_server_test, &QPushButton::clicked, this, [=]() {
+        // Get请求也隐式支持HEAD请求，减少带宽消耗
+        QNetworkReply *reply = manager->head(QNetworkRequest(ui->edit_server->text() + "/test"));
+        QObject::connect(reply, &QNetworkReply::finished, this, [=]() {
+            bool isOk = reply->error() == QNetworkReply::NoError;
+            QMessageBox::information(this, "Test Server", isOk ? "Connected" : "Error");
+            reply->deleteLater();
+        });
+    });
+    connect(ui->btn_uuid_reset, &QPushButton::clicked, this, &Widget::initUUID);
+    connect(ui->btn_save, &QPushButton::clicked, this, &Widget::writeSettings);
+
+
+    // userId = "mrbeanc"; //改为从文件读取 //TODO 改为 (uuid + userId + day)的hash值，每日动态变化，保证安全性
+    static QString hashId = Util::genSHA256(uuid + userId);
+    // static QString baseUrl = "https://124.220.81.213"; //https
+    // baseUrl = "http://localhost:8080";
+    qDebug() << hashId;
 
     //更新连接状态（UI显示）
     //每个请求结束都会触发
@@ -177,4 +199,123 @@ void Widget::updateConnectionStatus(bool isConnected)
         sysTray->setToolTip(APP_NAME + " - [Disconnected]");
         sysTray->setIcon(QIcon(":/img/clipboard-fail.ico"));
     }
+}
+
+void Widget::initSystemTray()
+{
+    if (this->sysTray) return;
+    this->sysTray = new QSystemTrayIcon(this);
+    connect(sysTray, &QSystemTrayIcon::activated, this, [=](QSystemTrayIcon::ActivationReason reason) {
+        if (reason == QSystemTrayIcon::Trigger){
+            show();
+        }
+    });
+
+    QMenu* menu = new QMenu(this);
+    menu->setStyleSheet("QMenu{background-color:rgb(15,15,15);color:rgb(220,220,220);}"
+                        "QMenu:selected{background-color:rgb(60,60,60);}");
+    QAction* act_setting = new QAction("Settings", menu);
+    QAction* act_autoStart = new QAction("AutoStart", menu);
+    QAction* act_quit = new QAction("Quit>>", menu);
+
+    connect(act_setting, &QAction::triggered, this, &Widget::show);
+    act_autoStart->setCheckable(true);
+    act_autoStart->setChecked(Util::isAutoRun(REG_APP_NAME));
+    connect(act_autoStart, &QAction::toggled, this, [=](bool checked) {
+        Util::setAutoRun(REG_APP_NAME, checked);
+        sysTray->showMessage("Tip", checked ? "已添加启动项" : "已移除启动项");
+    });
+    connect(act_quit, &QAction::triggered, qApp, &QApplication::quit);
+
+    menu->addAction(act_setting);
+    menu->addAction(act_autoStart);
+    menu->addAction(act_quit);
+
+    sysTray->setContextMenu(menu);
+    updateConnectionStatus(true);
+    sysTray->show();
+}
+
+void Widget::readSettings()
+{
+    if (!QFile::exists(SETTINGS_FILE)){
+        qDebug() << "NO .ini file";
+        return;
+    }
+    qDebug() << "Read settings:" << SETTINGS_FILE;
+
+    QSettings ini(SETTINGS_FILE, QSettings::IniFormat);
+    QString baseUrl = ini.value("server/url").toString();
+    QString userId = ini.value("user/id").toString();
+    QString uuid = ini.value("user/uuid").toString();
+
+    if (baseUrl.isEmpty() || userId.isEmpty() || uuid.isEmpty()) {
+        qWarning() << "WARN: Settings file Error.";
+        QMessageBox::warning(this, "Settings Error", "Settings file Error.");
+        return;
+    }
+
+    qDebug() << "Read settings:" << baseUrl << userId << uuid;
+    this->baseUrl = baseUrl;
+    this->userId = userId;
+    this->uuid = uuid;
+}
+
+void Widget::writeSettings()
+{
+    this->baseUrl = ui->edit_server->text();
+    this->userId = ui->edit_userid->text();
+    this->uuid = ui->edit_uuid->text();
+
+    if (baseUrl.isEmpty() || userId.isEmpty() || uuid.isEmpty()){
+        QMessageBox::critical(this, "ERROR", "Something is Empty!!");
+        return;
+    }
+
+    QSettings ini(SETTINGS_FILE, QSettings::IniFormat);
+    ini.setValue("server/url", baseUrl);
+    ini.setValue("user/id", userId);
+    ini.setValue("user/uuid", uuid);
+
+    qDebug() << "Write settings:" << baseUrl << userId << uuid;
+    QMessageBox::information(this, "Save Settings", "Saved");
+}
+
+void Widget::initSettings()
+{
+    initUUID();
+    this->baseUrl = defaultServerUrl;
+
+    this->show();
+}
+
+void Widget::initUUID()
+{
+    this->uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    ui->edit_uuid->setText(uuid);
+    showQrCode(uuid);
+}
+
+void Widget::showSettingData()
+{
+    ui->edit_server->setText(baseUrl);
+    ui->edit_userid->setText(userId);
+    ui->edit_uuid->setText(uuid);
+    showQrCode(uuid);
+
+    ui->edit_userid->setFocus();
+}
+
+void Widget::showQrCode(const QString& text)
+{
+    QImage qrImage = QRUtil::encodeText(text, 8);
+    ui->label_qr->setPixmap(QPixmap::fromImage(qrImage));
+    ui->label_qr->adjustSize();
+    ui->label_qr->setToolTip(text);
+}
+
+void Widget::showEvent(QShowEvent* event)
+{
+    showSettingData();
+    QWidget::showEvent(event);
 }

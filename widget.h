@@ -4,6 +4,7 @@
 #include <QNetworkAccessManager>
 #include <QSystemTrayIcon>
 #include <QWidget>
+#include <QApplication>
 #include "TipWidget.h"
 
 QT_BEGIN_NAMESPACE
@@ -21,15 +22,33 @@ public:
     ~Widget();
 private:
     void updateConnectionStatus(bool isConnected);
+    void initSystemTray();
+    void readSettings();
+    void writeSettings();
+    void initSettings();
+    void initUUID();
+    void showSettingData();
+    void showQrCode(const QString& text);
 
 private:
     Ui::Widget *ui;
 
     const QString APP_NAME = "Clipboard-Cloud";
+    const QString REG_APP_NAME = "Clipboard-Cloud.MrBeanCpp";
+    const QString SETTINGS_FILE = qApp->applicationDirPath() +  "/settings.ini";
     QNetworkAccessManager* manager = nullptr;
     QSystemTrayIcon *sysTray = nullptr;
     bool isConnected = false; //与服务器的连接状态
     bool isMeSetClipboard = false; //是否是本程序设置了剪贴板
     TipWidget *tipWidget = nullptr;
+
+    const QString defaultServerUrl = "https://124.220.81.213";
+    QString baseUrl;
+    QString userId;
+    QString uuid;
+
+    // QWidget interface
+protected:
+    virtual void showEvent(QShowEvent* event) override;
 };
 #endif // WIDGET_H

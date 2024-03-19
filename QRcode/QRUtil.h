@@ -30,7 +30,7 @@ public:
         return qrImage;
     }
 
-    static QImage encodeText(const QString& text, int pixSize = 10, int border = 2, QrCode::Ecc errCorLvl = QrCode::Ecc::LOW) {
+    static QImage encodeText(const QString& text, int pixSize = 6, int border = 2, QrCode::Ecc errCorLvl = QrCode::Ecc::LOW) {
         const QrCode qr = QrCode::encodeText(text.toStdString().c_str(), errCorLvl);
         return generateQRImage(qr, pixSize, border);
     }
