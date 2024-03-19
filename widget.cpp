@@ -29,8 +29,8 @@ Widget::Widget(QWidget *parent)
     initSystemTray();
 
     ui->edit_server->setPlaceholderText("Server Url");
-    ui->edit_userid->setPlaceholderText("User Id: Unique Identifier.");
-    ui->edit_uuid->setPlaceholderText("uuid");
+    ui->edit_userid->setPlaceholderText("Just for safe. Can be Empty.");
+    ui->edit_uuid->setPlaceholderText("UUID");
 
     if (QFile::exists(SETTINGS_FILE)) {
         readSettings();
@@ -52,13 +52,6 @@ Widget::Widget(QWidget *parent)
     connect(ui->btn_uuid_reset, &QPushButton::clicked, this, &Widget::initUUID);
     connect(ui->btn_save, &QPushButton::clicked, this, &Widget::writeSettings);
     connect(ui->btn_save, &QPushButton::clicked, this, &Widget::appReady); // save to ready while initSettings()
-
-
-    // userId = "mrbeanc"; //改为从文件读取 //TODO 改为 (uuid + userId + day)的hash值，每日动态变化，保证安全性
-    // hashId = Util::genSHA256(uuid + userId);
-    // static QString baseUrl = "https://124.220.81.213"; //https
-    // baseUrl = "http://localhost:8080";
-    // qDebug() << hashId;
 
     //更新连接状态（UI显示）
     //每个请求结束都会触发
@@ -118,7 +111,7 @@ Widget::Widget(QWidget *parent)
         });
     });
 
-    static std::function<void(void)> pollCloudClip = [=](){
+    static std::function<void(void)> pollCloudClip = [=](){ //TODO 封装解耦
         QNetworkRequest request(QUrl(QString("%1/clipboard/long-polling/%2/win").arg(baseUrl, hashId)));
         // 可以加入心跳机制确保更快重连（丢弃失败的连接），毕竟90s还是太长
         // 不过等我遇到问题再加吧hh 应该是小概率事件，相信HTTP！
@@ -158,12 +151,14 @@ Widget::Widget(QWidget *parent)
         });
     };
 
+    // after: readSettings or save
     connect(this, &Widget::appReady, this, [=](){
-        if (isAppReady) return; //防止重复初始化
-
-        this->isAppReady = true;
-        this->hashId = Util::genSHA256(uuid + userId);
+        //TODO 改为 (uuid + userId + day)的hash值，每日动态变化，保证安全性
+        this->hashId = Util::genSHA256(uuid + userId); //re-calculate hashId
         qDebug() << "id:" << hashId;
+
+        if (isAppReady) return; //防止重复初始化
+        this->isAppReady = true;
 
         pollCloudClip(); //发起长轮询，以获取实时推送
     });
@@ -183,7 +178,7 @@ void Widget::updateConnectionStatus(bool isConnected)
     Q_ASSERT(this->sysTray);
 
     if (isConnected) {
-        sysTray->setToolTip(APP_NAME);
+        sysTray->setToolTip(APP_NAME); //TODO 增加在线人数
         sysTray->setIcon(QIcon(":/img/clipboard.ico"));
     } else {
         sysTray->setToolTip(APP_NAME + " - [Disconnected]");
@@ -239,7 +234,7 @@ void Widget::readSettings()
     QString userId = ini.value("user/id").toString();
     QString uuid = ini.value("user/uuid").toString();
 
-    if (baseUrl.isEmpty() || userId.isEmpty() || uuid.isEmpty()) {
+    if (baseUrl.isEmpty() || uuid.isEmpty()) { // UserID可以为空
         qWarning() << "WARN: Settings file Error.";
         QMessageBox::warning(this, "Settings Error", "Settings file Error.");
         return;
@@ -257,7 +252,7 @@ void Widget::writeSettings()
     this->userId = ui->edit_userid->text();
     this->uuid = ui->edit_uuid->text();
 
-    if (baseUrl.isEmpty() || userId.isEmpty() || uuid.isEmpty()){
+    if (baseUrl.isEmpty() || uuid.isEmpty()){ // UserID可以为空
         QMessageBox::critical(this, "ERROR", "Something is Empty!!");
         return;
     }
