@@ -43,8 +43,38 @@ Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴�
 ### to-do
 
 - 未来将支持多设备共享剪贴板
+- 重构`IOS`快捷指令（目前对文本判断不是很精准）
 
 ## 使用方式
 
+1. 在 `Windows` 上运行 `clipboard-cloud.exe`（建议右键托盘图标，选择开机自启动（`AutoStart`））
 
+   ![client-settings](img/client-settings.png)
 
+   请用相机 or 扫码器扫描该二维码，复制`UUID`到两个快捷指令的对应字段中
+
+   *UserID可为空*
+
+   然后点击右下角的`[Save]`，程序就会开始连接服务器，可通过托盘图标查看连接状态
+
+   - `Ctrl + V`自动复制到云端，并在鼠标右上角显示小红点
+   - `IOS`上传数据时，`Windows`端会自动同步，并显示气泡通知
+
+2. `iPhone` or `iPad` 上安装快捷指令
+
+   使用相机 or 扫码器即可识别
+
+   1. **Copy from Cloud**:(download)
+      - iCloud: [https://www.icloud.com/shortcuts/68c21836850d48719a5eb3beb803704a](https://www.icloud.com/shortcuts/68c21836850d48719a5eb3beb803704a)
+      - ![从云上下载](img/copy-qr.png)
+   2. **Post to Cloud**:(upload)
+      - iCloud: [https://www.icloud.com/shortcuts/3a811beeaee14dc39b543966e556d9cd](https://www.icloud.com/shortcuts/3a811beeaee14dc39b543966e556d9cd)
+      - ![上传到云](img/post-qr.png)
+
+   可以将`Copy from Cloud`设置为**轻点背面两下**，`Post to Cloud`设置为**轻点背面三下**
+
+## 已知问题
+
+### IOS快捷指令
+
+- 无法Post链接：不太好判断文本 or 图像类型，目前通过剪贴板拓展名判断（txt、rtf），但是`url`链接拓展名为空，可以用正则特判？
