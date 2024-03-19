@@ -61,6 +61,7 @@ Widget::Widget(QWidget *parent)
     });
 
     //监听剪贴板变化
+    //sth.:hexo博客界面 代码块右上角的复制按钮，为什么会产生17次同样数据的剪切板修改, not my problem
     connect(qApp->clipboard(), &QClipboard::dataChanged, this, [=](){
         if (!isAppReady) return;
 
@@ -192,7 +193,7 @@ void Widget::initSystemTray()
     this->sysTray = new QSystemTrayIcon(this);
     connect(sysTray, &QSystemTrayIcon::activated, this, [=](QSystemTrayIcon::ActivationReason reason) {
         if (reason == QSystemTrayIcon::Trigger){
-            show();
+            show(), activateWindow();
         }
     });
 
