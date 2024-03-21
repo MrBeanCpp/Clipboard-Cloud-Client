@@ -20,6 +20,7 @@ public:
     static bool isAutoRun(const QString& appName);
 
     static QByteArray clipboardData(bool* isText = nullptr);
+    static QString genUUID(void);
 
 };
 

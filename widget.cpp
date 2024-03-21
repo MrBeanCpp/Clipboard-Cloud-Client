@@ -8,7 +8,6 @@
 #include <QNetworkReply>
 #include <QBuffer>
 #include <QRcode/QRUtil.h>
-#include <QUuid>
 #include <QTimer>
 #include <QSettings>
 #include <QFile>
@@ -42,14 +41,14 @@ Widget::Widget(QWidget *parent)
     // test server-url available
     connect(ui->btn_server_test, &QPushButton::clicked, this, [=]() {
         // Get请求也隐式支持HEAD请求，减少带宽消耗
-        QNetworkReply *reply = manager->head(QNetworkRequest(ui->edit_server->text() + "/test"));
+        QNetworkReply *reply = manager->head(QNetworkRequest(ui->edit_server->text() + "/test")); //TODO set timeout
         QObject::connect(reply, &QNetworkReply::finished, this, [=]() {
             bool isOk = reply->error() == QNetworkReply::NoError;
             QMessageBox::information(this, "Test Server", isOk ? "Connected" : "Error");
             reply->deleteLater();
         });
     });
-    connect(ui->btn_uuid_reset, &QPushButton::clicked, this, &Widget::initUUID);
+    connect(ui->btn_uuid_reset, &QPushButton::clicked, this, &Widget::reflashUUID);
     connect(ui->btn_save, &QPushButton::clicked, this, &Widget::writeSettings);
     connect(ui->btn_save, &QPushButton::clicked, this, &Widget::appReady); // save to ready while initSettings()
 
@@ -62,6 +61,8 @@ Widget::Widget(QWidget *parent)
 
     //监听剪贴板变化
     //sth.:hexo博客界面 代码块右上角的复制按钮，为什么会产生17次同样数据的剪切板修改, not my problem
+    //TODO: 浏览器复制URL会触发三次（应该是浏览器问题？）
+    //TODO: lastTime 限制频率，避免重复上传，但是不能只判断内容，只要不是短时间高频率的重复，都应该上传，才符合直觉
     connect(qApp->clipboard(), &QClipboard::dataChanged, this, [=](){
         if (!isAppReady) return;
 
@@ -269,17 +270,17 @@ void Widget::writeSettings()
 
 void Widget::initSettings()
 {
-    initUUID();
+    this->uuid = Util::genUUID();
     this->baseUrl = defaultServerUrl;
 
     this->show();
 }
 
-void Widget::initUUID()
+void Widget::reflashUUID() // Reflash UI but no inner data change
 {
-    this->uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    ui->edit_uuid->setText(uuid);
-    showQrCode(uuid);
+    auto _uuid = Util::genUUID();
+    ui->edit_uuid->setText(_uuid);
+    showQrCode(_uuid);
 }
 
 void Widget::showSettingData()

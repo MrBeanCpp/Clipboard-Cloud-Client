@@ -2,8 +2,8 @@
   <img src="img/Clipboard.png" style="display: inline-block; vertical-align: middle;">
   <h1 style="display: inline-block; vertical-align: middle;">Clipboard-Cloud</h1>
 </div>
-
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/MrBeanCpp/clipboard-cloud-client)
+![Github Release Downloads](https://img.shields.io/github/downloads/MrBeanCpp/Clipboard-Cloud-Client/total)
 
 Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴板
 
@@ -14,7 +14,7 @@ Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴�
 
 ### 特色
 
-- **随处可用**：提供了`Java (Springboot)`后端，用于广域网数据交换
+- **随处可用**：提供了`Java (Springboot)`[后端](https://github.com/MrBeanCpp/Clipboard-Cloud-BE)，用于广域网数据交换
 
 - **隐私保护**：
 
@@ -41,7 +41,7 @@ Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴�
   - 无需安装`IOS App`，仅用快捷指令完成
   - 无需登录注册，设定好`UUID` + 个人标识码（`UserID`）后即可使用
     - *`UserID`用于防止小概率的`UUID`碰撞 & 提高安全性，可置空*
-    - 🔑*`ID = SHA256(UUID + UserID)`，请务必确保`Windows`端与`IOS`端`UUID & UserID`一致*
+    - 🔑 *`ID = SHA256(UUID + UserID)`，请务必确保`Windows`端与`IOS`端`UUID & UserID`一致*
 
 - **高分屏支持**：`Qt`原生高`DPI`缩放方案
 
@@ -99,4 +99,10 @@ Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴�
 ### IOS快捷指令🫨
 
 - 不太好直接区分文本/图像，目前通过拓展名 & 类型判断，可以区分：*txt, rtf, heic, png, jpeg, url*
+
+
+
+## 第三方库
+
+- 二维码生成：[nayuki/QR-Code-generator](https://github.com/nayuki/QR-Code-generator)
 

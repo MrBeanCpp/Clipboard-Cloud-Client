@@ -26,7 +26,7 @@ private:
     void readSettings();
     void writeSettings();
     void initSettings();
-    void initUUID();
+    void reflashUUID();
     void showSettingData();
     void showQrCode(const QString& text);
 

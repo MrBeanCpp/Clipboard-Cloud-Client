@@ -8,6 +8,7 @@
 #include <QImage>
 #include <QBuffer>
 #include <QClipboard>
+#include <QUuid>
 
 const QString Util::REG_AUTORUN = "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"; //HKEY_CURRENT_USER仅仅对当前用户有效，但不需要管理员权限
 
@@ -77,4 +78,9 @@ QByteArray Util::clipboardData(bool* isText)
         qWarning() << "WARN: This Type is not supported NOW." << clipData->formats();
     }
     return data;
+}
+
+QString Util::genUUID()
+{
+    return QUuid::createUuid().toString(QUuid::WithoutBraces);
 }
