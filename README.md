@@ -2,6 +2,7 @@
   <img src="img/Clipboard.png" style="display: inline-block; vertical-align: middle;">
   <h1 style="display: inline-block; vertical-align: middle;">Clipboard-Cloud</h1>
 </div>
+
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/MrBeanCpp/clipboard-cloud-client)
 ![Github Release Downloads](https://img.shields.io/github/downloads/MrBeanCpp/Clipboard-Cloud-Client/total)
 
