@@ -2,7 +2,6 @@
   <img src="img/Clipboard.png" style="display: inline-block; vertical-align: middle;">
   <h1 style="display: inline-block; vertical-align: middle;">Clipboard-Cloud</h1>
 </div>
-
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/MrBeanCpp/clipboard-cloud-client)
 ![Github Release Downloads](https://img.shields.io/github/downloads/MrBeanCpp/Clipboard-Cloud-Client/total)
 
@@ -15,7 +14,7 @@ Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴�
 
 ### 特色
 
-- **随处可用**：提供了`Java (Springboot)`[后端](https://github.com/MrBeanCpp/Clipboard-Cloud-BE)，用于广域网数据交换
+- **随处可用**：提供了并发安全的`Java (Springboot)`[后端](https://github.com/MrBeanCpp/Clipboard-Cloud-BE)，用于广域网数据交换
 
 - **隐私保护**：
 
@@ -74,7 +73,7 @@ Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴�
 
    *UserID可为空*
 
-   **※** 🈁然后点击右下角的**[Save]**，程序就会开始连接服务器，可通过托盘图标查看连接状态
+   **※** 🈁然后点击右下角的 **[Save]** ，程序就会开始连接服务器，可通过托盘图标查看连接状态
 
    - `Ctrl+V`自动复制到云端，并在鼠标右上角显示小红点
    - `IOS`上传数据时，`Windows`端会自动同步，并显示气泡通知

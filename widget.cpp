@@ -37,7 +37,9 @@ Widget::Widget(QWidget *parent)
     // test server-url available
     connect(ui->btn_server_test, &QPushButton::clicked, this, [=]() {
         // Get请求也隐式支持HEAD请求，减少带宽消耗
-        QNetworkReply *reply = manager->head(QNetworkRequest(ui->edit_server->text() + "/test")); //TODO set timeout
+        QNetworkRequest request(QNetworkRequest(ui->edit_server->text() + "/test"));
+        request.setTransferTimeout(3500);
+        QNetworkReply *reply = manager->head(request); //TODO set timeout
         QObject::connect(reply, &QNetworkReply::finished, this, [=]() {
             bool isOk = reply->error() == QNetworkReply::NoError;
             QMessageBox::information(this, "Test Server", isOk ? "Connected" : "Error");
@@ -53,6 +55,11 @@ Widget::Widget(QWidget *parent)
 
         writeSettings();
         emit appReady();// save to ready while initSettings()
+
+        // show saved animation, to indicate the user
+        static const QString OriginalText = ui->btn_save->text(); // only init once
+        ui->btn_save->setText("Saved✔");
+        QTimer::singleShot(500, this, [=](){ ui->btn_save->setText(OriginalText); });
     });
 
     //更新连接状态（UI显示）
@@ -162,7 +169,7 @@ Widget::Widget(QWidget *parent)
         if (isAppReady) return; //防止重复初始化
         this->isAppReady = true;
 
-        sysTray->showMessage("App Ready.", "Connecting Server.");
+        sysTray->showMessage("App Ready", "Connecting Server...");
         pollCloudClip(); //发起长轮询，以获取实时推送
     });
 
@@ -193,6 +200,7 @@ void Widget::initSystemTray()
 {
     if (this->sysTray) return;
     this->sysTray = new QSystemTrayIcon(this);
+    connect(sysTray, &QSystemTrayIcon::messageClicked, this, &Widget::show);
     connect(sysTray, &QSystemTrayIcon::activated, this, [=](QSystemTrayIcon::ActivationReason reason) {
         if (reason == QSystemTrayIcon::Trigger){
             show(), activateWindow();
@@ -204,7 +212,7 @@ void Widget::initSystemTray()
                         "QMenu:selected{background-color:rgb(60,60,60);}");
     QAction* act_setting = new QAction("Settings⚙", menu);
     QAction* act_recvOnly = new QAction("Receive-Only", menu);
-    QAction* act_autoStart = new QAction("AutoStart", menu);
+    QAction* act_autoStart = new QAction("Auto-Start", menu);
     QAction* act_quit = new QAction("Quit>>", menu);
 
     connect(act_setting, &QAction::triggered, this, &Widget::show);
@@ -213,7 +221,8 @@ void Widget::initSystemTray()
     act_recvOnly->setChecked(this->recvOnly);
     connect(act_recvOnly, &QAction::toggled, this, [=](bool checked) {
         this->recvOnly = checked;
-        sysTray->showMessage("Receive-Only Mode", (recvOnly ? "[ON]: STOP Auto-Post" : "[OFF]: START Auto-Post"));
+        sysTray->showMessage(QString("Receive-Only Mode ") + (recvOnly ? "[ON]" : "[OFF]"),
+                             recvOnly ? "STOP Auto-Post" : "START Auto-Post");
         writeSettings();
     });
 
@@ -221,7 +230,7 @@ void Widget::initSystemTray()
     act_autoStart->setChecked(Util::isAutoRun(REG_APP_NAME));
     connect(act_autoStart, &QAction::toggled, this, [=](bool checked) {
         Util::setAutoRun(REG_APP_NAME, checked);
-        sysTray->showMessage("Tip", checked ? "Added [Auto-Start]" : "Removed [Auto-Start]");
+        sysTray->showMessage("Auto-Start Mode", checked ? "Added [Auto-Start]" : "Removed [Auto-Start]");
     });
 
     connect(act_quit, &QAction::triggered, qApp, &QApplication::quit);
@@ -281,7 +290,6 @@ void Widget::writeSettings()
     ini.setValue("app/recvOnly", recvOnly);
 
     qDebug() << "Write settings:" << baseUrl << userId << uuid;
-    sysTray->showMessage("Settings", "Saved.");
 }
 
 void Widget::initSettings()
@@ -314,7 +322,7 @@ void Widget::showQrCode(const QString& text)
     QImage qrImage = QRUtil::encodeText(text, 8);
     ui->label_qr->setPixmap(QPixmap::fromImage(qrImage));
     ui->label_qr->adjustSize();
-    ui->label_qr->setToolTip(text);
+    ui->label_qr->setToolTip("UUID");
 }
 
 QString Widget::genHashID()
