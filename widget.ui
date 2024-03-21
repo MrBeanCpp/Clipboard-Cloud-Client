@@ -34,7 +34,14 @@
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLineEdit" name="edit_userid"/>
+      <widget class="QLineEdit" name="edit_userid">
+       <property name="toolTip">
+        <string/>
+       </property>
+       <property name="placeholderText">
+        <string>Just for safe. Can be Empty.</string>
+       </property>
+      </widget>
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="label_uuid">
@@ -50,6 +57,9 @@
          <property name="readOnly">
           <bool>true</bool>
          </property>
+         <property name="placeholderText">
+          <string>UUID</string>
+         </property>
         </widget>
        </item>
        <item>
@@ -64,7 +74,7 @@
      <item row="3" column="1">
       <widget class="QLabel" name="label">
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;UUID is used to prevent duplicate IDs. Copy it to your IOS shortcuts.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Please copy UUID &amp;amp; UserID to your IOS shortcuts.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
       </widget>
      </item>
@@ -81,7 +91,11 @@
      <item row="0" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
-        <widget class="QLineEdit" name="edit_server"/>
+        <widget class="QLineEdit" name="edit_server">
+         <property name="placeholderText">
+          <string>Server url</string>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="btn_server_test">
@@ -102,7 +116,7 @@
      <item>
       <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;https://blog.cls.ink/about/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;Maybe some Donate?&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;https://blog.cls.ink/about/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#007af4;&quot;&gt;Maybe some Donate?🥺&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="openExternalLinks">
         <bool>true</bool>
@@ -135,7 +149,7 @@
      <item>
       <widget class="QPushButton" name="btn_save">
        <property name="text">
-        <string>Save</string>
+        <string>Save💾</string>
        </property>
       </widget>
      </item>

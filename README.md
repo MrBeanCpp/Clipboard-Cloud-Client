@@ -24,6 +24,7 @@ Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴�
   - 每日动态变化的`ID`：避免私钥泄露 (*TODO*)
   - `SHA256`算法：有效防止哈希碰撞
   - `HTTPS`协议：拒绝中间人攻击
+  - 模式切换：可开启`[Receive-Only Mode]`，该模式不会自动监听剪贴板，只接收云端推送
 
 - **良好的人机交互**：
 
@@ -32,9 +33,7 @@ Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴�
     ![cursor-tip](img/cursor-tip.png)
 
   - `Windows`端接收数据后，会通过气泡通知用户
-
   - `IOS`端上传与下载均有弹窗通知
-
   - 网络故障时，会改变托盘图标颜色通知用户
 
 - **清爽的用户体验**：

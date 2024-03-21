@@ -29,6 +29,7 @@ private:
     void reflashUUID();
     void showSettingData();
     void showQrCode(const QString& text);
+    QString genHashID(void);
 
 signals:
     void appReady();
@@ -52,6 +53,7 @@ private:
     QString hashId;
 
     bool isAppReady = false; //是否已经初始化完成
+    bool recvOnly = false; //仅接收模式，关闭监听剪贴板，不自动发送数据（for 隐私保护）
 
     // QWidget interface
 protected:
