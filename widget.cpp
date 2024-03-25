@@ -20,7 +20,7 @@ Widget::Widget(QWidget *parent)
     , ui(new Ui::Widget)
 {
     ui->setupUi(this);
-    setWindowTitle("Clipboard-Cloud by [MrBeanCpp]"); // https://github.com/MrBeanCpp
+    setWindowTitle(APP_NAME + " by [MrBeanCpp]"); // https://github.com/MrBeanCpp
 
     this->manager = new QNetworkAccessManager(this);
     this->tipWidget = new TipWidget(this);
@@ -189,10 +189,10 @@ void Widget::updateConnectionStatus(bool isConnected)
 
     if (isConnected) {
         sysTray->setToolTip(APP_NAME); //TODO 增加在线人数
-        sysTray->setIcon(QIcon(":/img/clipboard.ico"));
+        sysTray->setIcon(QIcon(":/img/dog-paw.ico"));
     } else {
         sysTray->setToolTip(APP_NAME + " - [Disconnected]");
-        sysTray->setIcon(QIcon(":/img/clipboard-fail.ico"));
+        sysTray->setIcon(QIcon(":/img/dog-paw-fail.ico"));
     }
 }
 

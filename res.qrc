@@ -2,5 +2,7 @@
     <qresource prefix="/">
         <file>img/clipboard.ico</file>
         <file>img/clipboard-fail.ico</file>
+        <file>img/dog-paw.ico</file>
+        <file>img/dog-paw-fail.ico</file>
     </qresource>
 </RCC>

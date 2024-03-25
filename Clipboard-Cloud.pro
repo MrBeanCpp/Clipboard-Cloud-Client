@@ -36,7 +36,9 @@ msvc {
     QMAKE_CXXFLAGS += /utf-8
 }
 
-RC_ICONS = img/clipboard.ico
+RC_ICONS = img/dog-paw.ico
 
 RESOURCES += \
     res.qrc
+
+TARGET = DogPaw

@@ -37,8 +37,8 @@ signals:
 private:
     Ui::Widget *ui;
 
-    const QString APP_NAME = "Clipboard-Cloud";
-    const QString REG_APP_NAME = "Clipboard-Cloud.MrBeanCpp";
+    const QString APP_NAME = "Dog-Paw";
+    const QString REG_APP_NAME = "Dog-Paw.MrBeanCpp";
     const QString SETTINGS_FILE = qApp->applicationDirPath() +  "/settings.ini";
     QNetworkAccessManager* manager = nullptr;
     QSystemTrayIcon *sysTray = nullptr;

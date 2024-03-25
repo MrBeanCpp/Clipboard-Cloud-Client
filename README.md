@@ -1,13 +1,16 @@
 <div align="center">
-  <img src="img/Clipboard.png" style="display: inline-block; vertical-align: middle;">
-  <h1 style="display: inline-block; vertical-align: middle;">Clipboard-Cloud</h1>
+  <img src="img/dog-paw.ico" style="display: inline-block; vertical-align: middle;">
+  <h1 style="display: inline-block; vertical-align: middle;">Dog-Paw</h1>
 </div>
+
 
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/MrBeanCpp/clipboard-cloud-client)
 ![Github Release Downloads](https://img.shields.io/github/downloads/MrBeanCpp/Clipboard-Cloud-Client/total)
 
-Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴板
+Dog-Paw 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴板
+
+> Dog-Paw: Your friendly, efficient cloud clipboard that 'grabs' and stores data for you.
 
 ### 目前支持的数据格式：
 
@@ -63,7 +66,7 @@ Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴�
 
 ## 使用方式
 
-1. 在 `Windows` 上运行 `clipboard-cloud.exe`（建议右键托盘图标，选择开机自启动（`AutoStart`））
+1. 在 `Windows` 上运行 `DogPaw.exe`（建议右键托盘图标，选择开机自启动（`AutoStart`））
 
    ![client-settings](img/client-settings.png)
 
@@ -107,3 +110,8 @@ Clipboard-Cloud 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴�
 
 - 二维码生成：[nayuki/QR-Code-generator](https://github.com/nayuki/QR-Code-generator)
 
+
+
+## 特别鸣谢
+
+- ICON Design：[@pinkyrie](https://github.com/pinkyrie)
