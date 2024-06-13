@@ -88,7 +88,7 @@ Dog-Paw 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴板
    📷使用相机 or 扫码器即可识别 
 
    1. ⬇**Copy from Cloud**:(download)
-      - iCloud: [https://www.icloud.com/shortcuts/68c21836850d48719a5eb3beb803704a](https://www.icloud.com/shortcuts/68c21836850d48719a5eb3beb803704a)
+      - iCloud: [https://www.icloud.com/shortcuts/917ee986c6b24e31b414a1d6b840fef0](https://www.icloud.com/shortcuts/917ee986c6b24e31b414a1d6b840fef0)
       - ![Copy from Cloud](img/copy-from-cloud-qr.png)
    2. ⬆**Post to Cloud**:(upload)
       - iCloud: [https://www.icloud.com/shortcuts/bc14a7b9041a4751afb273afc5554aff](https://www.icloud.com/shortcuts/bc14a7b9041a4751afb273afc5554aff)
