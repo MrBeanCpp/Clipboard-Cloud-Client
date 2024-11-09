@@ -53,6 +53,12 @@ Widget::Widget(QWidget *parent)
         this->uuid = ui->edit_uuid->text();
         this->hashId = genHashID();
 
+        if (pollingReply) {
+            qDebug() << "Settings changed, abort old polling.";
+            pollingReply->abort(); // stop old polling & start new automatically
+            pollingReply = nullptr;
+        }
+
         writeSettings();
         emit appReady();// save to ready while initSettings()
 
@@ -124,46 +130,6 @@ Widget::Widget(QWidget *parent)
         });
     });
 
-    static std::function<void(void)> pollCloudClip = [=](){ //TODO 封装解耦
-        QNetworkRequest request(QUrl(QString("%1/clipboard/long-polling/%2/win").arg(baseUrl, hashId)));
-        // 可以加入心跳机制确保更快重连（丢弃失败的连接），毕竟90s还是太长
-        // 不过等我遇到问题再加吧hh 应该是小概率事件，相信HTTP！
-        request.setTransferTimeout(90 * 1000); // 90s超时时间，避免服务端掉线 & 网络异常造成的无响应永久等待
-        QNetworkReply *reply = manager->get(request);
-        qDebug() << "+Start long-polling...";
-
-        connect(reply, &QNetworkReply::finished, this, [=]() {
-            int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            qDebug() << "-Long polling done." << statusCode;
-            if (reply->error() == QNetworkReply::NoError) {
-                QByteArray replyData = reply->readAll();
-                QJsonDocument doc = QJsonDocument::fromJson(replyData);
-                QJsonObject jsonData = doc.object();
-
-                const QString os = jsonData.value("os").toString();
-                const QString base64Data = jsonData.value("data").toString();
-                const QByteArray data = QByteArray::fromBase64(base64Data.toUtf8()); //base64解码
-                const bool isText = jsonData.value("isText").toBool();
-
-                if (os == "ios" && !data.isEmpty()) {
-                    isMeSetClipboard = true;
-                    if (isText) {
-                        qApp->clipboard()->setText(data);
-                    } else {
-                        qApp->clipboard()->setImage(QImage::fromData(data));
-                    }
-                    sysTray->showMessage("↓Pasted from IOS", isText ? data : "[Image]"); //可以在 系统-通知 中关闭声音
-                    qDebug() << "↓Pasted from IOS;" << Util::printDataSize(base64Data.toUtf8().size());
-                }
-            } else {
-                qCritical() << "× !!Get Error:" << reply->errorString();
-            }
-            reply->deleteLater();
-
-            QTimer::singleShot(1000, this, pollCloudClip);
-        });
-    };
-
     // after: readSettings or save
     connect(this, &Widget::appReady, this, [=](){
         if (isAppReady) return; //防止重复初始化
@@ -178,6 +144,49 @@ Widget::Widget(QWidget *parent)
 Widget::~Widget()
 {
     delete ui;
+}
+
+void Widget::pollCloudClip()
+{
+    QNetworkRequest request(QUrl(QString("%1/clipboard/long-polling/%2/win").arg(baseUrl, hashId)));
+    // 可以加入心跳机制确保更快重连（丢弃失败的连接），毕竟90s还是太长
+    // 不过等我遇到问题再加吧hh 应该是小概率事件，相信HTTP！
+    request.setTransferTimeout(90 * 1000); // 90s超时时间，避免服务端掉线 & 网络异常造成的无响应永久等待
+    QNetworkReply *reply = manager->get(request);
+    this->pollingReply = reply; // for aborting it when server changed
+    qDebug() << "+Start long-polling...";
+
+    connect(reply, &QNetworkReply::finished, this, [=]() {
+        int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        qDebug() << "-Long polling done." << statusCode;
+        if (reply->error() == QNetworkReply::NoError) {
+            QByteArray replyData = reply->readAll();
+            QJsonDocument doc = QJsonDocument::fromJson(replyData);
+            QJsonObject jsonData = doc.object();
+
+            const QString os = jsonData.value("os").toString();
+            const QString base64Data = jsonData.value("data").toString();
+            const QByteArray data = QByteArray::fromBase64(base64Data.toUtf8()); //base64解码
+            const bool isText = jsonData.value("isText").toBool();
+
+            if (os == "ios" && !data.isEmpty()) {
+                isMeSetClipboard = true;
+                if (isText) {
+                    qApp->clipboard()->setText(data);
+                } else {
+                    qApp->clipboard()->setImage(QImage::fromData(data));
+                }
+                sysTray->showMessage("↓Pasted from IOS", isText ? data : "[Image]"); //可以在 系统-通知 中关闭声音
+                qDebug() << "↓Pasted from IOS;" << Util::printDataSize(base64Data.toUtf8().size());
+                // TODO 为什么一张照片在这里显示 993 KB，但是copy到QQ聊天框保存到本地后有6.88MB (because .jpg to .png!?)
+            }
+        } else {
+            qCritical() << "× !!Get Error:" << reply->errorString();
+        }
+        reply->deleteLater();
+
+        QTimer::singleShot(1000, this, &Widget::pollCloudClip);
+    });
 }
 
 void Widget::updateConnectionStatus(bool isConnected)

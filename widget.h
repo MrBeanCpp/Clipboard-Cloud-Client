@@ -21,6 +21,7 @@ public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
 private:
+    void pollCloudClip();
     void updateConnectionStatus(bool isConnected);
     void initSystemTray();
     void readSettings();
@@ -45,8 +46,9 @@ private:
     bool isConnected = false; //与服务器的连接状态
     bool isMeSetClipboard = false; //是否是本程序设置了剪贴板
     TipWidget *tipWidget = nullptr;
+    QNetworkReply* pollingReply = nullptr;
 
-    const QString defaultServerUrl = "https://124.220.81.213";
+    const QString defaultServerUrl = "https://clipboard.aliaba.fun";
     QString baseUrl;
     QString userId;
     QString uuid;
