@@ -12,10 +12,13 @@ Dog-Paw 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴板
 
 > Dog-Paw: Your friendly, efficient cloud clipboard that 'grabs' and stores data for you.
 
-### 目前支持的数据格式：
+#### 目前支持的数据格式：
 
 - 文本（Text）
 - 图像（Image）
+
+> [!IMPORTANT]
+> 默认服务器已迁移至：`https://clipboard.aliaba.fun`
 
 ### 特色
 
