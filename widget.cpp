@@ -125,6 +125,7 @@ Widget::Widget(QWidget *parent)
                 qCritical() << "× !!Post Error:" << statusCode << reply->errorString();
                 tipWidget->showFailedStyle();
                 QTimer::singleShot(2000, tipWidget, &TipWidget::hide);
+                sysTray->showMessage("Post Error", QString("code: %1, msg: %2").arg(statusCode).arg(reply->errorString()));
             }
             reply->deleteLater(); //比delete更安全，因为不确定是否有其他slot未执行
         });
