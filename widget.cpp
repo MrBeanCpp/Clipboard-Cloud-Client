@@ -166,7 +166,8 @@ void Widget::pollCloudClip()
 
             const QString os = jsonData.value("os").toString();
             const QString base64Data = jsonData.value("data").toString();
-            const QByteArray data = QByteArray::fromBase64(base64Data.toUtf8()); //base64解码
+            const QByteArray base64Bytes = base64Data.toUtf8();
+            const QByteArray data = QByteArray::fromBase64(base64Bytes); //base64解码
             const bool isText = jsonData.value("isText").toBool();
 
             if (os == "ios" && !data.isEmpty()) {
@@ -176,8 +177,9 @@ void Widget::pollCloudClip()
                 } else {
                     qApp->clipboard()->setImage(QImage::fromData(data));
                 }
-                sysTray->showMessage("↓Pasted from IOS", isText ? data : "[Image]"); //可以在 系统-通知 中关闭声音
-                qDebug() << "↓Pasted from IOS;" << Util::printDataSize(base64Data.toUtf8().size());
+                QString readableSize = Util::printDataSize(base64Bytes.size());
+                sysTray->showMessage("↓Pasted from IOS", isText ? data : QString("[Image] %1").arg(readableSize)); //可以在 系统-通知 中关闭声音
+                qDebug() << "↓Pasted from IOS;" << readableSize;
                 // TODO 为什么一张照片在这里显示 993 KB，但是copy到QQ聊天框保存到本地后有6.88MB (because .jpg to .png!?)
             }
         } else {
