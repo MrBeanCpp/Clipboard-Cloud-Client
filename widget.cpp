@@ -23,6 +23,11 @@ Widget::Widget(QWidget *parent)
     setWindowTitle(APP_NAME + " by [MrBeanCpp]"); // https://github.com/MrBeanCpp
 
     this->manager = new QNetworkAccessManager(this);
+    // 启用SSL session ticket，会增加一点点内存
+    QSslConfiguration defaultConfig = QSslConfiguration::defaultConfiguration();
+    defaultConfig.setSslOption(QSsl::SslOptionDisableSessionPersistence, false);
+    QSslConfiguration::setDefaultConfiguration(defaultConfig);
+
     this->tipWidget = new TipWidget(this);
 
     if (QFile::exists(SETTINGS_FILE)) {
@@ -128,6 +133,14 @@ Widget::Widget(QWidget *parent)
                 sysTray->showMessage("Post Error", QString("code: %1, msg: %2").arg(statusCode).arg(reply->errorString()));
             }
             reply->deleteLater(); //比delete更安全，因为不确定是否有其他slot未执行
+        });
+
+        // SSL会话缓存重用貌似也会触发这个？
+        connect(reply, &QNetworkReply::encrypted, this, [=]() {
+            qDebug() << "SSL握手完成时间:" << start.msecsTo(QTime::currentTime()) << "ms" << reply->sslConfiguration().sessionTicket().size();
+        });
+        connect(reply, &QNetworkReply::sslErrors, this, [=](const QList<QSslError>& errors) {
+            qDebug() << "SSL握手错误:" << errors;
         });
     });
 
