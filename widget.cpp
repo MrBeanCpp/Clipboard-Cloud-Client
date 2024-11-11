@@ -85,63 +85,8 @@ Widget::Widget(QWidget *parent)
     //TODO: 浏览器复制URL会触发三次（应该是浏览器问题？）
     //TODO: lastTime 限制频率，避免重复上传，但是不能只判断内容，只要不是短时间高频率的重复，都应该上传，才符合直觉
     connect(qApp->clipboard(), &QClipboard::dataChanged, this, [=](){
-        if (!isAppReady) return;
         if (recvOnly) return;
-
-        if (isMeSetClipboard) { // 避免检测到自身对剪切板的修改
-            isMeSetClipboard = false;
-            return;
-        }
-
-        bool isText;
-        // 1.图像进行 Base64 编码，防止老式设备进行隐式编解码导致信息丢失
-        // 2.文本也进行 BASE64 编码，防止外链明文泄露，造成言论安全问题
-        QByteArray data = Util::clipboardData(&isText).toBase64();
-        if (data.isEmpty()) return;
-
-        if (data.size() > 1024 * 1024 * 2) { // 2MB
-            qWarning() << "WARN: Data too large, ignore.";
-            sysTray->showMessage("WARN", "Data too large, ignore.");
-            return;
-        }
-
-        QNetworkRequest request(QUrl(QString("%1/clipboard/%2/win").arg(baseUrl, hashId)));
-        // 超时会abort()，同时触发finished信号，并产生QNetworkReply::OperationCanceledError 状态码为0
-        request.setTransferTimeout(8 * 1000); // 8s超时时间
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
-        QJsonObject jsonData;
-        jsonData.insert("data", QString::fromUtf8(data));
-        jsonData.insert("isText", isText);
-
-        QJsonDocument doc(jsonData);
-        QByteArray postData = doc.toJson();
-
-        QNetworkReply *reply = manager->post(request, postData);
-        tipWidget->showNormalStyle();
-        QTime start = QTime::currentTime();
-
-        QObject::connect(reply, &QNetworkReply::finished, this, [=]() {
-            int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            if (reply->error() == QNetworkReply::NoError) {
-                qDebug() << "↑Copied to Cloud √." << statusCode << Util::printDataSize(data.size()) << start.msecsTo(QTime::currentTime()) << "ms";
-                tipWidget->hide();
-            } else {
-                qCritical() << "× !!Post Error:" << statusCode << reply->errorString();
-                tipWidget->showFailedStyle();
-                QTimer::singleShot(2000, tipWidget, &TipWidget::hide);
-                sysTray->showMessage("Post Error", QString("code: %1, msg: %2").arg(statusCode).arg(reply->errorString()));
-            }
-            reply->deleteLater(); //比delete更安全，因为不确定是否有其他slot未执行
-        });
-
-        // SSL会话缓存重用貌似也会触发这个？
-        connect(reply, &QNetworkReply::encrypted, this, [=]() {
-            qDebug() << "SSL握手完成时间:" << start.msecsTo(QTime::currentTime()) << "ms" << reply->sslConfiguration().sessionTicket().size();
-        });
-        connect(reply, &QNetworkReply::sslErrors, this, [=](const QList<QSslError>& errors) {
-            qDebug() << "SSL握手错误:" << errors;
-        });
+        postClipboard();
     });
 
     // after: readSettings or save
@@ -158,6 +103,66 @@ Widget::Widget(QWidget *parent)
 Widget::~Widget()
 {
     delete ui;
+}
+
+void Widget::postClipboard()
+{
+    if (!isAppReady) return;
+
+    if (isMeSetClipboard) { // 避免检测到自身对剪切板的修改
+        isMeSetClipboard = false;
+        return;
+    }
+
+    bool isText;
+    // 1.图像进行 Base64 编码，防止老式设备进行隐式编解码导致信息丢失
+    // 2.文本也进行 BASE64 编码，防止外链明文泄露，造成言论安全问题
+    QByteArray data = Util::clipboardData(&isText).toBase64();
+    if (data.isEmpty()) return;
+
+    if (data.size() > 1024 * 1024 * 2) { // 2MB
+        qWarning() << "WARN: Data too large, ignore.";
+        sysTray->showMessage("WARN", "Data too large, ignore.");
+        return;
+    }
+
+    QNetworkRequest request(QUrl(QString("%1/clipboard/%2/win").arg(baseUrl, hashId)));
+    // 超时会abort()，同时触发finished信号，并产生QNetworkReply::OperationCanceledError 状态码为0
+    request.setTransferTimeout(8 * 1000); // 8s超时时间
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+
+    QJsonObject jsonData;
+    jsonData.insert("data", QString::fromUtf8(data));
+    jsonData.insert("isText", isText);
+
+    QJsonDocument doc(jsonData);
+    QByteArray postData = doc.toJson();
+
+    QNetworkReply *reply = manager->post(request, postData);
+    tipWidget->showNormalStyle();
+    QTime start = QTime::currentTime();
+
+    QObject::connect(reply, &QNetworkReply::finished, this, [=]() {
+        int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        if (reply->error() == QNetworkReply::NoError) {
+            qDebug() << "↑Copied to Cloud √." << statusCode << Util::printDataSize(data.size()) << start.msecsTo(QTime::currentTime()) << "ms";
+            tipWidget->hide();
+        } else {
+            qCritical() << "× !!Post Error:" << statusCode << reply->errorString();
+            tipWidget->showFailedStyle();
+            QTimer::singleShot(2000, tipWidget, &TipWidget::hide);
+            sysTray->showMessage("Post Error", QString("code: %1, msg: %2").arg(statusCode).arg(reply->errorString()), QSystemTrayIcon::Warning);
+        }
+        reply->deleteLater(); //比delete更安全，因为不确定是否有其他slot未执行
+    });
+
+    // SSL会话缓存重用貌似也会触发这个？
+    connect(reply, &QNetworkReply::encrypted, this, [=]() {
+        qDebug() << "SSL握手完成时间:" << start.msecsTo(QTime::currentTime()) << "ms" << reply->sslConfiguration().sessionTicket().size();
+    });
+    connect(reply, &QNetworkReply::sslErrors, this, [=](const QList<QSslError>& errors) {
+        qDebug() << "SSL握手错误:" << errors;
+    });
 }
 
 void Widget::pollCloudClip()
@@ -212,11 +217,12 @@ void Widget::updateConnectionStatus(bool isConnected)
 
     Q_ASSERT(this->sysTray);
 
+    const QString MSG = "\n[click to Post]";
     if (isConnected) {
-        sysTray->setToolTip(APP_NAME); //TODO 增加在线人数
+        sysTray->setToolTip(APP_NAME + MSG); //TODO 增加在线人数
         sysTray->setIcon(QIcon(":/img/dog-paw.ico"));
     } else {
-        sysTray->setToolTip(APP_NAME + " - [Disconnected]");
+        sysTray->setToolTip(APP_NAME + " - [Disconnected]" + MSG);
         sysTray->setIcon(QIcon(":/img/dog-paw-fail.ico"));
     }
 }
@@ -227,19 +233,23 @@ void Widget::initSystemTray()
     this->sysTray = new QSystemTrayIcon(this);
     connect(sysTray, &QSystemTrayIcon::messageClicked, this, &Widget::show);
     connect(sysTray, &QSystemTrayIcon::activated, this, [=](QSystemTrayIcon::ActivationReason reason) {
-        if (reason == QSystemTrayIcon::Trigger){
+        if (reason == QSystemTrayIcon::DoubleClick){
             show(), activateWindow();
+        } else if (reason == QSystemTrayIcon::Trigger){
+            this->postClipboard();
         }
     });
 
     QMenu* menu = new QMenu(this);
     menu->setStyleSheet("QMenu{background-color:rgb(15,15,15);color:rgb(220,220,220);}"
                         "QMenu:selected{background-color:rgb(60,60,60);}");
+    QAction* act_post = new QAction("Post↗ Clipboard", menu);
     QAction* act_setting = new QAction("Settings⚙", menu);
     QAction* act_recvOnly = new QAction("Receive-Only", menu);
     QAction* act_autoStart = new QAction("Auto-Start", menu);
     QAction* act_quit = new QAction("Quit>>", menu);
 
+    connect(act_post, &QAction::triggered, this, &Widget::postClipboard);
     connect(act_setting, &QAction::triggered, this, &Widget::show);
 
     act_recvOnly->setCheckable(true);
@@ -260,6 +270,7 @@ void Widget::initSystemTray()
 
     connect(act_quit, &QAction::triggered, qApp, &QApplication::quit);
 
+    menu->addAction(act_post);
     menu->addAction(act_setting);
     menu->addAction(act_recvOnly);
     menu->addAction(act_autoStart);

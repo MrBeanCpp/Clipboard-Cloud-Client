@@ -21,6 +21,7 @@ public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
 private:
+    void postClipboard();
     void pollCloudClip();
     void updateConnectionStatus(bool isConnected);
     void initSystemTray();
