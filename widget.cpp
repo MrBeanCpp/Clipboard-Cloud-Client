@@ -86,6 +86,11 @@ Widget::Widget(QWidget *parent)
     //TODO: lastTime 限制频率，避免重复上传，但是不能只判断内容，只要不是短时间高频率的重复，都应该上传，才符合直觉
     connect(qApp->clipboard(), &QClipboard::dataChanged, this, [=](){
         if (recvOnly) return;
+        if (isMeSetClipboard) { // 避免检测到自身对剪切板的修改
+            qDebug() << "Info: Me set clipboard, ignore.";
+            isMeSetClipboard = false;
+            return;
+        }
         postClipboard();
     });
 
@@ -108,11 +113,6 @@ Widget::~Widget()
 void Widget::postClipboard()
 {
     if (!isAppReady) return;
-
-    if (isMeSetClipboard) { // 避免检测到自身对剪切板的修改
-        isMeSetClipboard = false;
-        return;
-    }
 
     bool isText;
     // 1.图像进行 Base64 编码，防止老式设备进行隐式编解码导致信息丢失
@@ -138,13 +138,13 @@ void Widget::postClipboard()
     QJsonDocument doc(jsonData);
     QByteArray postData = doc.toJson();
 
+    QTime start = QTime::currentTime();
     QNetworkReply *reply = manager->post(request, postData);
     tipWidget->showNormalStyle();
-    QTime start = QTime::currentTime();
 
     QObject::connect(reply, &QNetworkReply::finished, this, [=]() {
         int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        if (reply->error() == QNetworkReply::NoError) {
+        if (reply->error() == QNetworkReply::NoError) { // 实验室环境, （第二次发）1KB以上数据（图片）比1KB以下（文本）要快（40ms vs 120ms）离谱！！
             qDebug() << "↑Copied to Cloud √." << statusCode << Util::printDataSize(data.size()) << start.msecsTo(QTime::currentTime()) << "ms";
             tipWidget->hide();
         } else {
@@ -233,7 +233,7 @@ void Widget::initSystemTray()
     this->sysTray = new QSystemTrayIcon(this);
     connect(sysTray, &QSystemTrayIcon::messageClicked, this, &Widget::show);
     connect(sysTray, &QSystemTrayIcon::activated, this, [=](QSystemTrayIcon::ActivationReason reason) {
-        if (reason == QSystemTrayIcon::DoubleClick){
+        if (reason == QSystemTrayIcon::DoubleClick){ // 会先触发一次Trigger 很离谱
             show(), activateWindow();
         } else if (reason == QSystemTrayIcon::Trigger){
             this->postClipboard();
@@ -250,7 +250,7 @@ void Widget::initSystemTray()
     QAction* act_quit = new QAction("Quit>>", menu);
 
     connect(act_post, &QAction::triggered, this, &Widget::postClipboard);
-    connect(act_setting, &QAction::triggered, this, &Widget::show);
+    connect(act_setting, &QAction::triggered, this, &Widget::showNormal);
 
     act_recvOnly->setCheckable(true);
     act_recvOnly->setChecked(this->recvOnly);

@@ -8,7 +8,7 @@
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/MrBeanCpp/clipboard-cloud-client)
 ![Github Release Downloads](https://img.shields.io/github/downloads/MrBeanCpp/Clipboard-Cloud-Client/total)
 
-Dog-Paw 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴板
+Dog-Paw 是一个支持💻`Windows` 和 📱`iOS`/💻︎`MacOS`间共享的云剪贴板
 
 > Dog-Paw: Your friendly, efficient cloud clipboard that 'grabs' and stores data for you.
 
@@ -46,7 +46,7 @@ Dog-Paw 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴板
 
 - **清爽的用户体验**：
 
-  - 无需安装`IOS App`，仅用快捷指令完成
+  - 无需安装`iOS/Mac App`，仅用快捷指令完成
   - 无需登录注册，设定好`UUID` + 个人标识码（`UserID`）后即可使用
     - *`UserID`用于防止小概率的`UUID`碰撞 & 提高安全性，可置空*
     - 🔑 *`ID = SHA256(UUID + UserID)`，请务必确保`Windows`端与`IOS`端`UUID & UserID`一致*
@@ -61,12 +61,12 @@ Dog-Paw 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴板
 
 ### 限制
 
-- 目前仅支持单台`Windows` & `IOS`间数据共享
+- 目前仅支持单台`Windows` & `iOS/Mac`间数据共享
 
 ### To-Do📜
 
 - 未来将支持多设备共享剪贴板
-- 重构`IOS`快捷指令
+- 重构快捷指令
 
 ## 使用方式
 
@@ -85,7 +85,7 @@ Dog-Paw 是一个支持💻`Windows` 和 📱`iOS`间共享的云剪贴板
    **※** 🈁然后点击右下角的 **[Save]** ，程序就会开始连接服务器，可通过托盘图标查看连接状态
 
    - `Ctrl+V`自动复制到云端，并在鼠标右上角显示小红点
-   - `IOS`上传数据时，`Windows`端会自动同步，并显示气泡通知
+   - `iOS`上传数据时，`Windows`端会自动同步，并显示气泡通知
 
 2. `iPhone` or `iPad` 上安装快捷指令
 
