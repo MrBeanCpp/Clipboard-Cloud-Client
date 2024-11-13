@@ -23,9 +23,10 @@ Widget::Widget(QWidget *parent)
     setWindowTitle(APP_NAME + " by [MrBeanCpp]"); // https://github.com/MrBeanCpp
 
     this->manager = new QNetworkAccessManager(this);
-    // 启用SSL session ticket，会增加一点点内存
     QSslConfiguration defaultConfig = QSslConfiguration::defaultConfiguration();
+    // 启用SSL session ticket，会增加一点点内存
     defaultConfig.setSslOption(QSsl::SslOptionDisableSessionPersistence, false);
+    defaultConfig.setProtocol(QSsl::TlsV1_3);  // 指定 TLS 1.3
     QSslConfiguration::setDefaultConfiguration(defaultConfig);
 
     this->tipWidget = new TipWidget(this);
