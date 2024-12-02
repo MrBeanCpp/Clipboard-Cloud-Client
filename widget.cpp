@@ -113,13 +113,19 @@ Widget::~Widget()
 
 void Widget::postClipboard()
 {
-    if (!isAppReady) return;
+    if (!isAppReady) {
+        sysTray->showMessage("WARN", "App not ready.", QSystemTrayIcon::Warning);
+        return;
+    }
 
     bool isText;
     // 1.图像进行 Base64 编码，防止老式设备进行隐式编解码导致信息丢失
     // 2.文本也进行 BASE64 编码，防止外链明文泄露，造成言论安全问题
     QByteArray data = Util::clipboardData(&isText).toBase64();
-    if (data.isEmpty()) return;
+    if (data.isEmpty()) {
+        sysTray->showMessage("WARN", "Clipboard data is empty.");
+        return;
+    }
 
     if (data.size() > 1024 * 1024 * 2) { // 2MB
         qWarning() << "WARN: Data too large, ignore.";
