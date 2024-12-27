@@ -212,6 +212,7 @@ void Widget::pollCloudClip()
             qCritical() << "× !!Get Error:" << reply->errorString();
         }
         reply->deleteLater();
+        this->pollingReply = nullptr;
 
         QTimer::singleShot(1000, this, &Widget::pollCloudClip);
     });

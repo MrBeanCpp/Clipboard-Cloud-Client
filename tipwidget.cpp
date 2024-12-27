@@ -9,7 +9,7 @@ TipWidget::TipWidget(QWidget *parent)
     , ui(new Ui::TipWidget)
 {
     ui->setupUi(this);
-
+    setWindowTitle("DogPowTip");
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint | Qt::Tool); //Qt::Tool弹出时不会抢占焦点
     setWindowFlag(Qt::WindowTransparentForInput); //鼠标穿透
     setAttribute(Qt::WA_TranslucentBackground);
