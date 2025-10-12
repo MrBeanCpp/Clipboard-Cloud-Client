@@ -100,7 +100,27 @@ Dog-Paw 是一个支持💻`Windows` 和 📱`iOS`/💻︎`MacOS`间共享的云
 
    可以将`Copy from Cloud`设置为**轻点背面两下**，`Post to Cloud`设置为**轻点背面三下**
 
-   <img src="img/click-back.png" width="50%" />
+   ![click-back](img/click-back.png)
+
+## 更多玩法
+
+### 自动推送验证码
+
+在**PC**中登录网站，发送的**短信验证码**却是**手机**接收的，这着实令人不快
+
+结合`iPhone`**自动化**（快捷指令App），通过`Dog-Paw`，就可以实现短信**验证码自动推送**功能
+
+无需任何操作，验证码自动转发至**PC剪切板**，`Ctrl + V`即可完成登录
+
+#### 原理
+
+通过**iPhone自动化**监听短信接收事件 -> 筛选包含"验证码"关键词的信息 -> 触发快捷指令运行
+
+**自定义快捷指令**：获取短信文本 -> 正则匹配验证码 -> 写入**iPhone**剪切板 -> `Dog-Paw`上传到云 -> **PC**接收并写入剪切板
+
+![Post to Cloud](img/auto-send-sms-code.png)
+
+自动化设置可参考：[验证码快捷指令教程](https://www.vgover.com/news/124843)
 
 ## 已知问题
 
