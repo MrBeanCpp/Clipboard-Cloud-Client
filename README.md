@@ -106,7 +106,7 @@ Dog-Paw 是一个支持💻`Windows` 和 📱`iOS`/💻︎`MacOS`间共享的云
 
 ### 自动推送验证码
 
-在**PC**中登录网站，发送的**短信验证码**却是**手机**接收的，这着实令人不快
+在**Windows**中登录网站，发送的**短信验证码**却是**手机**接收的，这着实令人不快
 
 结合`iPhone`**自动化**（快捷指令App），通过`Dog-Paw`，就可以实现短信**验证码自动推送**功能
 
@@ -121,6 +121,8 @@ Dog-Paw 是一个支持💻`Windows` 和 📱`iOS`/💻︎`MacOS`间共享的云
 ![Post to Cloud](img/auto-send-sms-code.png)
 
 自动化设置可参考：[验证码快捷指令教程](https://www.vgover.com/news/124843)
+
+演示视频：[一种基于iOS自动化的短信验证码转发机制设计与实现](https://www.bilibili.com/video/BV1xv4GzwEyd/)
 
 ## 已知问题
 
