@@ -92,10 +92,10 @@ Dog-Paw 是一个支持💻`Windows` 和 📱`iOS`/💻︎`MacOS`间共享的云
    📷使用相机 or 扫码器即可识别 
 
    1. ⬇**Copy from Cloud**:(download)
-      - iCloud: [https://www.icloud.com/shortcuts/917ee986c6b24e31b414a1d6b840fef0](https://www.icloud.com/shortcuts/917ee986c6b24e31b414a1d6b840fef0)
+      - iCloud: [https://www.icloud.com/shortcuts/3bb562abe6c146adb771a6d78711f8cb](https://www.icloud.com/shortcuts/3bb562abe6c146adb771a6d78711f8cb)
       - ![Copy from Cloud](img/copy-from-cloud-qr.png)
    2. ⬆**Post to Cloud**:(upload)
-      - iCloud: [https://www.icloud.com/shortcuts/bc14a7b9041a4751afb273afc5554aff](https://www.icloud.com/shortcuts/bc14a7b9041a4751afb273afc5554aff)
+      - iCloud: [https://www.icloud.com/shortcuts/5a19b7cdc44f4d6eb85a4aacda8e3f3f](https://www.icloud.com/shortcuts/5a19b7cdc44f4d6eb85a4aacda8e3f3f)
       - ![Post to Cloud](img/post-to-cloud-qr.png)
 
    可以将`Copy from Cloud`设置为**轻点背面两下**，`Post to Cloud`设置为**轻点背面三下**
