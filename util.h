@@ -24,6 +24,7 @@ public:
     static QByteArray clipboardData(bool* isText = nullptr);
     static QString genUUID(void);
 
+    static void openExplorerAndSelectFile(const QString& filePath);
     static QString saveImageToTemp(const QImage& image, const char *format = nullptr);
     static bool isHttpUrl(const QString& s);
     static QString extractFirstHttpUrl(const QString& text);

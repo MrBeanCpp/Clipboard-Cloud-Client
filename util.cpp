@@ -17,6 +17,7 @@
 #include <QStandardPaths>
 #include <QSaveFile>
 #include <QElapsedTimer>
+#include <Windows.h>
 
 const QString Util::REG_AUTORUN = "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"; //HKEY_CURRENT_USER仅仅对当前用户有效，但不需要管理员权限
 
@@ -120,6 +121,11 @@ QByteArray Util::clipboardData(bool* isText)
 QString Util::genUUID()
 {
     return QUuid::createUuid().toString(QUuid::WithoutBraces);
+}
+
+void Util::openExplorerAndSelectFile(const QString& filePath)
+{
+    ShellExecuteW(NULL, L"open", L"explorer", QString("/select, \"%1\"").arg(QDir::toNativeSeparators(filePath)).toStdWString().c_str(), NULL, SW_SHOW);
 }
 
 QString Util::saveImageToTemp(const QImage& image, const char *format)

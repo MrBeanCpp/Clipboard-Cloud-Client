@@ -17,6 +17,7 @@
 #include "wintoastlib.h"
 #include "toastHandler.h"
 #include <QDesktopServices>
+#include <QFileDialog>
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
@@ -221,10 +222,18 @@ void Widget::pollCloudClip()
                     auto img = QImage::fromData(data);
                     qApp->clipboard()->setImage(img);
                     // https://learn.microsoft.com/en-us/windows/apps/develop/notifications/app-notifications/adaptive-interactive-toasts?tabs=appsdk#hero-image
-                    auto imgForToast = img.scaled(364, 180, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
-                    auto imgTmpPath = Util::saveImageToTemp(imgForToast, "jpg");
-                    qDebug() << "Image saved to temp path:" << imgTmpPath;
-                    showToastWithHeroImageText(imgTmpPath, "Image from iOS", readableSize);
+                    auto thumbnail = img.scaled(364, 180, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+                    auto thumbPath = Util::saveImageToTemp(thumbnail, "jpg");
+                    qDebug() << "Image saved to temp path:" << thumbPath;
+                    auto bodyText = QString("%1  (%2 × %3)").arg(readableSize).arg(img.width()).arg(img.height());
+                    showToastWithHeroImageText(thumbPath, "Click to save image", bodyText, [img]{ // 弹窗选择保存位置
+                        auto path = QFileDialog::getSaveFileName(nullptr, "Save Image", {}, "Images (*.jpg *.png)");
+                        if (path.isEmpty()) return;
+                        if (img.save(path)) {
+                            Util::openExplorerAndSelectFile(path);
+                            qDebug() << "Image saved to:" << path;
+                        }
+                    });
                 }
                 qDebug() << "↓Pasted from IOS;" << readableSize;
                 // TODO 为什么一张照片在这里显示 993 KB，但是copy到QQ聊天框保存到本地后有6.88MB (because .jpg to .png!?)

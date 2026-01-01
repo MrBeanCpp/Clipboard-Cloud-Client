@@ -49,13 +49,11 @@ inline void initWinToast(const QString& appName, const QString& companyName) {
         qWarning() << "Warn: Could not initialize WinToastLib.";
 }
 
-inline void showToastWithHeroImageText(const QString& heroImage, const QString& firstLine, const QString& secondLine = "") {
+inline void showToastWithHeroImageText(const QString& heroImage, const QString& firstLine, const QString& secondLine = "", std::function<void()> onBodyClick = nullptr) {
     using namespace WinToastLib;
 
     auto* h = new ToastHandler();
-    h->onBodyClick = [=]() {
-        qDebug() << "Toast clicked.";
-    };
+    h->onBodyClick = std::move(onBodyClick);
 
     WinToastTemplate templ = WinToastTemplate(WinToastTemplate::ImageAndText02);
     templ.setTextField(firstLine.toStdWString(), WinToastTemplate::FirstLine);
