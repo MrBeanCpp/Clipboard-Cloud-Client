@@ -10,6 +10,13 @@
 #include <QClipboard>
 #include <QUuid>
 #include <QRegularExpression>
+#include <QTemporaryFile>
+#include <QUrl>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QStandardPaths>
+#include <QSaveFile>
+#include <QElapsedTimer>
 
 const QString Util::REG_AUTORUN = "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"; //HKEY_CURRENT_USER仅仅对当前用户有效，但不需要管理员权限
 
@@ -113,4 +120,102 @@ QByteArray Util::clipboardData(bool* isText)
 QString Util::genUUID()
 {
     return QUuid::createUuid().toString(QUuid::WithoutBraces);
+}
+
+QString Util::saveImageToTemp(const QImage& image, const char *format)
+{
+    QTemporaryFile tmp;
+    tmp.setAutoRemove(false); // 关键：否则对象析构就删了，Toast 还没读到
+    if (!tmp.open()) return {};
+
+    image.save(&tmp, format);
+    tmp.close();
+
+    return QDir::toNativeSeparators(tmp.fileName());
+}
+
+bool Util::isHttpUrl(const QString& s)
+{
+    const QUrl url = QUrl::fromUserInput(s.trimmed());
+    return url.isValid()
+           && !url.host().isEmpty()
+           && (url.scheme() == "http" || url.scheme() == "https");
+}
+
+QString Util::extractFirstHttpUrl(const QString& text)
+{
+    static const QRegularExpression urlRegex(R"((https?://[^\s"'<>()]+))",
+                                             QRegularExpression::CaseInsensitiveOption);
+    QRegularExpressionMatch match = urlRegex.match(text);
+    if (match.hasMatch()) {
+        QString urlStr = match.captured(1);
+        if (isHttpUrl(urlStr))
+            return urlStr;
+    }
+    return {};
+}
+
+void Util::downloadFaviconIcoToTemp(
+    QNetworkAccessManager* nam,
+    const QString& pageUrlStr,
+    std::function<void(QString localPath)> cb,
+    int timeoutMs)
+{
+    if (!nam) { cb({}); return; }
+
+    QUrl pageUrl = QUrl::fromUserInput(pageUrlStr.trimmed());
+    if (!pageUrl.isValid() || pageUrl.host().isEmpty()) { cb({}); return; }
+
+    const QString scheme = pageUrl.scheme().toLower();
+    if (scheme != "http" && scheme != "https") { cb({}); return; }
+
+    QUrl icoUrl = pageUrl;
+    icoUrl.setPath("/favicon.ico");
+    icoUrl.setQuery({});
+    icoUrl.setFragment({});
+    icoUrl.setUserInfo({});
+
+    const QString tmpDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation)
+                           + "/DogPaw_favicons";
+    QDir().mkpath(tmpDir);
+
+    const QByteArray key = QCryptographicHash::hash(icoUrl.host().toUtf8(), QCryptographicHash::Sha1).toHex();
+    const QString icoPath = QDir(tmpDir).filePath(QString("favicon_%1.ico").arg(QString::fromLatin1(key)));
+    const QString nativeIcoPath = QDir::toNativeSeparators(icoPath);
+
+    // ✅ 缓存命中：文件存在且非空就直接返回
+    QFileInfo f(icoPath);
+    if (f.exists() && f.isFile() && f.size() > 0) {
+        qDebug() << "[favicon] cache hit" << icoUrl.toString()
+        << "path" << nativeIcoPath
+        << "bytes" << f.size();
+        cb(nativeIcoPath);
+        return;
+    }
+
+    QNetworkRequest req(icoUrl);
+    req.setTransferTimeout(timeoutMs);
+    req.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                     QNetworkRequest::NoLessSafeRedirectPolicy);
+
+    QElapsedTimer t;
+    t.start();
+
+    QNetworkReply* reply = nam->get(req);
+    QObject::connect(reply, &QNetworkReply::finished, reply, [reply, icoPath, nativeIcoPath, cb, t]() {
+        qDebug() << "Favicon download took" << t.elapsed() << "ms";
+
+        const QByteArray bytes = reply->readAll();
+        const bool ok = (reply->error() == QNetworkReply::NoError) && !bytes.isEmpty();
+        reply->deleteLater();
+
+        if (!ok) { cb({}); return; }
+
+        QSaveFile f(icoPath); // 原子写入
+        if (!f.open(QIODevice::WriteOnly)) { cb({}); return; }
+        f.write(bytes);
+        if (!f.commit()) { cb({}); return; }
+
+        cb(nativeIcoPath);
+    });
 }

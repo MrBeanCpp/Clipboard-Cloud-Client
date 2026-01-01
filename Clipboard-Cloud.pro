@@ -11,6 +11,7 @@ CONFIG += c++17
 SOURCES += \
     QRcode/qrcodegen.cpp \
     main.cpp \
+    third-party/WinToast/src/wintoastlib.cpp \
     tipwidget.cpp \
     util.cpp \
     widget.cpp
@@ -18,13 +19,18 @@ SOURCES += \
 HEADERS += \
     QRcode/QRUtil.h \
     QRcode/qrcodegen.hpp \
+    third-party/WinToast/include/wintoastlib.h \
     tipwidget.h \
+    toastHandler.h \
     util.h \
     widget.h
 
 FORMS += \
     tipwidget.ui \
     widget.ui
+
+INCLUDEPATH += \
+    third-party/WinToast/include
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

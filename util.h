@@ -3,6 +3,8 @@
 
 #include <QString>
 #include <QCryptographicHash>
+#include <QImage>
+#include <QNetworkAccessManager>
 
 class Util {
 private:
@@ -21,6 +23,11 @@ public:
 
     static QByteArray clipboardData(bool* isText = nullptr);
     static QString genUUID(void);
+
+    static QString saveImageToTemp(const QImage& image, const char *format = nullptr);
+    static bool isHttpUrl(const QString& s);
+    static QString extractFirstHttpUrl(const QString& text);
+    static void downloadFaviconIcoToTemp(QNetworkAccessManager* nam, const QString& pageUrlStr, std::function<void(QString localPath)> cb, int timeoutMs = 2000);
 
 };
 

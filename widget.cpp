@@ -14,6 +14,9 @@
 #include <QMessageBox>
 #include <QMenu>
 #include <QCloseEvent>
+#include "wintoastlib.h"
+#include "toastHandler.h"
+#include <QDesktopServices>
 
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
@@ -104,6 +107,7 @@ Widget::Widget(QWidget *parent)
         pollCloudClip(); //发起长轮询，以获取实时推送
     });
 
+    initWinToast(APP_NAME, "Aliaba");
 }
 
 Widget::~Widget()
@@ -198,13 +202,30 @@ void Widget::pollCloudClip()
 
             if (os == "ios" && !data.isEmpty()) {
                 isMeSetClipboard = true;
-                if (isText) {
-                    qApp->clipboard()->setText(data);
-                } else {
-                    qApp->clipboard()->setImage(QImage::fromData(data));
-                }
                 QString readableSize = Util::printDataSize(base64Bytes.size());
-                sysTray->showMessage("↓Pasted from IOS", isText ? data : QString("[Image] %1").arg(readableSize)); //可以在 系统-通知 中关闭声音
+                if (isText) {
+                    auto text = QString::fromUtf8(data);
+                    qApp->clipboard()->setText(text);
+                    auto httpUrl = Util::extractFirstHttpUrl(text);
+                    if (!httpUrl.isEmpty()) {
+                        qDebug() << "Detected URL in Pasted Text";
+                        Util::downloadFaviconIcoToTemp(manager, httpUrl, [=](QString localIcoPath){
+                            showToastWithActions(localIcoPath, "Link detected. Click to Open", text, "from iOS", [=](int actionIndex){
+                                if (actionIndex == 0) // Open
+                                    QDesktopServices::openUrl(QUrl(httpUrl));
+                            });
+                        });
+                    } else
+                        sysTray->showMessage("↓Pasted Text from IOS", text); //可以在 系统-通知 中关闭声音
+                } else {
+                    auto img = QImage::fromData(data);
+                    qApp->clipboard()->setImage(img);
+                    // https://learn.microsoft.com/en-us/windows/apps/develop/notifications/app-notifications/adaptive-interactive-toasts?tabs=appsdk#hero-image
+                    auto imgForToast = img.scaled(364, 180, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+                    auto imgTmpPath = Util::saveImageToTemp(imgForToast, "jpg");
+                    qDebug() << "Image saved to temp path:" << imgTmpPath;
+                    showToastWithHeroImageText(imgTmpPath, "Image from iOS", readableSize);
+                }
                 qDebug() << "↓Pasted from IOS;" << readableSize;
                 // TODO 为什么一张照片在这里显示 993 KB，但是copy到QQ聊天框保存到本地后有6.88MB (because .jpg to .png!?)
             }
