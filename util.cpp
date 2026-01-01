@@ -203,6 +203,10 @@ void Util::downloadFaviconIcoToTemp(
     req.setTransferTimeout(timeoutMs);
     req.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                      QNetworkRequest::NoLessSafeRedirectPolicy);
+    req.setHeader(QNetworkRequest::UserAgentHeader,
+                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                  "AppleWebKit/537.36 (KHTML, like Gecko) "
+                  "Chrome/120.0 Safari/537.36");
 
     QElapsedTimer t;
     t.start();
@@ -215,12 +219,23 @@ void Util::downloadFaviconIcoToTemp(
         const bool ok = (reply->error() == QNetworkReply::NoError) && !bytes.isEmpty();
         reply->deleteLater();
 
+        { // log for debug
+            const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            const QString ctype = reply->header(QNetworkRequest::ContentTypeHeader).toString();
+            qDebug() << "[Favicon download] status" << status
+                     << "Err" << int(reply->error()) << reply->errorString()
+                     << "ContentType" << ctype
+                     << "bytes" << bytes.size()
+                     << "FinalUrl" << reply->url().toString();
+        }
+
         if (!ok) { cb({}); return; }
 
         QSaveFile f(icoPath); // 原子写入
         if (!f.open(QIODevice::WriteOnly)) { cb({}); return; }
         f.write(bytes);
         if (!f.commit()) { cb({}); return; }
+        qDebug() << "[Favicon] Saved to" << nativeIcoPath << ";Bytes:" << bytes.size();
 
         cb(nativeIcoPath);
     });
