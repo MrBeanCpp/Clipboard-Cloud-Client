@@ -30,6 +30,11 @@ public:
     static QString extractFirstHttpUrl(const QString& text);
     static void downloadFaviconIcoToTemp(QNetworkAccessManager* nam, const QString& pageUrlStr, std::function<void(QString localPath)> cb, int timeoutMs = 2000);
 
+    // 判断腾讯会议客户端是否安装
+    static bool isTencentMeetingInstalled();
+    static QString parseTencentMeetingCode(const QString &link);
+    static bool openTencentMeetingClient(const QString &meetingCode);
+
 };
 
 #endif // UTIL_H

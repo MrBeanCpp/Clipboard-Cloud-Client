@@ -5,6 +5,7 @@
 #include <wintoastlib.h>
 #include <functional>
 #include <QString>
+#include <util.h>
 
 class ToastHandler final : public WinToastLib::IWinToastHandler {
 public:
@@ -78,7 +79,9 @@ inline void showToastWithActions(const QString& image, const QString& firstLine,
     templ.setAttributionText(sourceText.toStdWString());
     if (!image.isEmpty())
         templ.setImagePath(image.toStdWString());
-    templ.addAction(okText.toStdWString());
+    if (!okText.isEmpty())
+        templ.addAction(okText.toStdWString());
+    if (!noText.isEmpty())
     templ.addAction(noText.toStdWString());
 
     if (WinToast::instance()->showToast(templ, h) < 0)

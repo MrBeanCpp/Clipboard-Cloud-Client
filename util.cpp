@@ -18,6 +18,7 @@
 #include <QSaveFile>
 #include <QElapsedTimer>
 #include <Windows.h>
+#include <QDesktopServices>
 #include "webIconFetcher.h"
 
 const QString Util::REG_AUTORUN = "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"; //HKEY_CURRENT_USER仅仅对当前用户有效，但不需要管理员权限
@@ -168,4 +169,41 @@ void Util::downloadFaviconIcoToTemp(
 {
     static WebIconFetcher fetcher(nam, nullptr, timeoutMs);
     fetcher.fetch(pageUrlStr, cb);
+}
+
+bool Util::isTencentMeetingInstalled()
+{
+    // 检查 HKEY_CLASSES_ROOT\wemeet
+    QSettings reg("HKEY_CLASSES_ROOT\\wemeet", QSettings::NativeFormat);
+
+    if (reg.allKeys().isEmpty()) {
+        // 注册表没有 wemeet 协议
+        return false;
+    }
+    return true;
+}
+
+QString Util::parseTencentMeetingCode(const QString &link)
+{
+    QUrl url(link.trimmed());
+    if (!url.isValid() || url.host().toLower() != "meeting.tencent.com")
+        return {};
+
+    QStringList segments = url.path().split('/', Qt::SkipEmptyParts);
+    if (segments.isEmpty())
+        return {};
+
+    // 会议号通常是数字（这里做个合理长度范围，避免误判）
+    static const QRegularExpression reDigits("^\\d{6,15}$");
+    auto code = segments.last();
+    if (!reDigits.match(code).hasMatch())
+        return {};
+
+    return code; // 最后一段就是会议号
+}
+
+bool Util::openTencentMeetingClient(const QString& meetingCode)
+{
+    QString protocol = QString("wemeet://page/inmeeting?meeting_code=%1").arg(meetingCode);
+    return QDesktopServices::openUrl(QUrl(protocol));
 }

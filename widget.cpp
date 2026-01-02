@@ -213,10 +213,21 @@ void Widget::pollCloudClip()
                     if (!httpUrl.isEmpty()) {
                         qDebug() << "Detected URL in Pasted Text";
                         Util::downloadFaviconIcoToTemp(manager, httpUrl, [=](QString localIcoPath){
-                            showToastWithActions(localIcoPath, "Link detected. Click to Open", text, "from iOS", [=](int actionIndex){
-                                if (actionIndex == 0) // Open
-                                    QDesktopServices::openUrl(QUrl(httpUrl));
-                            });
+                            auto tmCode = Util::parseTencentMeetingCode(httpUrl);
+                            if (!tmCode.isEmpty()) { // 腾讯会议链接
+                                bool isTMInstalled = Util::isTencentMeetingInstalled();
+                                showToastWithActions(localIcoPath, "Tencent Meeting invitation", text, "code: " + tmCode, [=](int actionIndex){
+                                    if (actionIndex == 0) // Open
+                                        QDesktopServices::openUrl(QUrl(httpUrl));
+                                    else if (actionIndex == 1)
+                                        Util::openTencentMeetingClient(tmCode);
+                                }, "Open in browser 🌐", isTMInstalled ? "Launch App 🖥️" : "");
+                            } else { // 普通超链接
+                                showToastWithActions(localIcoPath, "Link detected. Click to Open", text, "from iOS", [=](int actionIndex){
+                                    if (actionIndex == 0) // Open
+                                        QDesktopServices::openUrl(QUrl(httpUrl));
+                                });
+                            }
                         });
                     } else
                         sysTray->showMessage("↓Pasted Text from IOS", text); //可以在 系统-通知 中关闭声音
