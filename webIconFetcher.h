@@ -133,6 +133,14 @@ private:
                          QNetworkRequest::NoLessSafeRedirectPolicy);
         req.setHeader(QNetworkRequest::UserAgentHeader, kUserAgent);
 
+        // ✅ 做“更保守”的 TLS/HTTP2 设置，避免被全局 TLS1.3 污染
+        QSslConfiguration ssl = QSslConfiguration::defaultConfiguration();
+        ssl.setProtocol(QSsl::TlsV1_2OrLater);
+        req.setSslConfiguration(ssl);
+
+        // ✅ 很多 CDN + Qt 的玄学握手/ALPN 问题，禁掉 HTTP2 往往更稳
+        req.setAttribute(QNetworkRequest::Http2AllowedAttribute, false);
+
         if (acceptHtml) {
             req.setRawHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
         } else if (acceptImage) {
