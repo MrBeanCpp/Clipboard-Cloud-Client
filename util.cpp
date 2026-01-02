@@ -18,6 +18,7 @@
 #include <QSaveFile>
 #include <QElapsedTimer>
 #include <Windows.h>
+#include "webIconFetcher.h"
 
 const QString Util::REG_AUTORUN = "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"; //HKEY_CURRENT_USER仅仅对当前用户有效，但不需要管理员权限
 
@@ -142,12 +143,10 @@ QString Util::saveImageToTemp(const QImage& image, const char *format)
 
 bool Util::isHttpUrl(const QString& s)
 {
-    const QUrl url = QUrl::fromUserInput(s.trimmed());
-    return url.isValid()
-           && !url.host().isEmpty()
-           && (url.scheme() == "http" || url.scheme() == "https");
+    return WebIconFetcher::isHttpUrl(s.trimmed());
 }
 
+// 从文本中提取第一个Http(s)链接
 QString Util::extractFirstHttpUrl(const QString& text)
 {
     static const QRegularExpression urlRegex(R"((https?://[^\s"'<>()]+))",
@@ -167,76 +166,6 @@ void Util::downloadFaviconIcoToTemp(
     std::function<void(QString localPath)> cb,
     int timeoutMs)
 {
-    if (!nam) { cb({}); return; }
-
-    QUrl pageUrl = QUrl::fromUserInput(pageUrlStr.trimmed());
-    if (!pageUrl.isValid() || pageUrl.host().isEmpty()) { cb({}); return; }
-
-    const QString scheme = pageUrl.scheme().toLower();
-    if (scheme != "http" && scheme != "https") { cb({}); return; }
-
-    QUrl icoUrl = pageUrl;
-    icoUrl.setPath("/favicon.ico");
-    icoUrl.setQuery({});
-    icoUrl.setFragment({});
-    icoUrl.setUserInfo({});
-
-    const QString tmpDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation)
-                           + "/DogPaw_favicons";
-    QDir().mkpath(tmpDir);
-
-    const QByteArray key = QCryptographicHash::hash(icoUrl.host().toUtf8(), QCryptographicHash::Sha1).toHex();
-    const QString icoPath = QDir(tmpDir).filePath(QString("favicon_%1.ico").arg(QString::fromLatin1(key)));
-    const QString nativeIcoPath = QDir::toNativeSeparators(icoPath);
-
-    // ✅ 缓存命中：文件存在且非空就直接返回
-    QFileInfo f(icoPath);
-    if (f.exists() && f.isFile() && f.size() > 0) {
-        qDebug() << "[favicon] cache hit" << icoUrl.toString()
-        << "path" << nativeIcoPath
-        << "bytes" << f.size();
-        cb(nativeIcoPath);
-        return;
-    }
-
-    QNetworkRequest req(icoUrl);
-    req.setTransferTimeout(timeoutMs);
-    req.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
-                     QNetworkRequest::NoLessSafeRedirectPolicy);
-    req.setHeader(QNetworkRequest::UserAgentHeader,
-                  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                  "AppleWebKit/537.36 (KHTML, like Gecko) "
-                  "Chrome/120.0 Safari/537.36");
-
-    QElapsedTimer t;
-    t.start();
-
-    QNetworkReply* reply = nam->get(req);
-    QObject::connect(reply, &QNetworkReply::finished, reply, [reply, icoPath, nativeIcoPath, cb, t]() {
-        qDebug() << "Favicon download took" << t.elapsed() << "ms";
-
-        const QByteArray bytes = reply->readAll();
-        const bool ok = (reply->error() == QNetworkReply::NoError) && !bytes.isEmpty();
-        reply->deleteLater();
-
-        { // log for debug
-            const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-            const QString ctype = reply->header(QNetworkRequest::ContentTypeHeader).toString();
-            qDebug() << "[Favicon download] status" << status
-                     << "Err" << int(reply->error()) << reply->errorString()
-                     << "ContentType" << ctype
-                     << "bytes" << bytes.size()
-                     << "FinalUrl" << reply->url().toString();
-        }
-
-        if (!ok) { cb({}); return; }
-
-        QSaveFile f(icoPath); // 原子写入
-        if (!f.open(QIODevice::WriteOnly)) { cb({}); return; }
-        f.write(bytes);
-        if (!f.commit()) { cb({}); return; }
-        qDebug() << "[Favicon] Saved to" << nativeIcoPath << ";Bytes:" << bytes.size();
-
-        cb(nativeIcoPath);
-    });
+    static WebIconFetcher fetcher(nam, nullptr, timeoutMs);
+    fetcher.fetch(pageUrlStr, cb);
 }

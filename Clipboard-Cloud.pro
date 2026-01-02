@@ -23,6 +23,7 @@ HEADERS += \
     tipwidget.h \
     toastHandler.h \
     util.h \
+    webIconFetcher.h \
     widget.h
 
 FORMS += \

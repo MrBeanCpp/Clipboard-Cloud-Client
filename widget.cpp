@@ -28,6 +28,7 @@ Widget::Widget(QWidget *parent)
 
     this->manager = new QNetworkAccessManager(this);
     QSslConfiguration defaultConfig = QSslConfiguration::defaultConfiguration();
+    qDebug() << "default protocol:" << defaultConfig.protocol();
     // 启用SSL session ticket，会增加一点点内存
     defaultConfig.setSslOption(QSsl::SslOptionDisableSessionPersistence, false);
     defaultConfig.setProtocol(QSsl::TlsV1_3);  // 指定 TLS 1.3
@@ -170,7 +171,8 @@ void Widget::postClipboard()
 
     // SSL会话缓存重用貌似也会触发这个？
     connect(reply, &QNetworkReply::encrypted, this, [=]() {
-        qDebug() << "SSL握手完成时间:" << start.msecsTo(QTime::currentTime()) << "ms" << reply->sslConfiguration().sessionTicket().size();
+        qDebug() << "SSL握手完成时间:" << start.msecsTo(QTime::currentTime()) << "ms; sessionTicket size:"
+                 << reply->sslConfiguration().sessionTicket().size() << "protocol:"<< reply->sslConfiguration().protocol();
     });
     connect(reply, &QNetworkReply::sslErrors, this, [=](const QList<QSslError>& errors) {
         qDebug() << "SSL握手错误:" << errors;
